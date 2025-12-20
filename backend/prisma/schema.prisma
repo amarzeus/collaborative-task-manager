@@ -60,6 +60,7 @@ model Task {
   creator      User    @relation("CreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
   assignedToId String?
   assignedTo   User?   @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notifications Notification[]
 
   @@index([creatorId])
   @@index([assignedToId])
@@ -72,16 +73,19 @@ model Task {
 /// In-app notifications for task assignments and updates
 model Notification {
   id        String   @id @default(uuid())
+  title     String
   message   String
-  type      String   @default("ASSIGNMENT")
+  type      String   @default("task_assigned") // task_assigned, task_updated, task_completed, task_comment
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   // Relations
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId String?
+  task   Task?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([read])
+  @@index([userId, read])
+  @@index([createdAt])
   @@map("notifications")
 }

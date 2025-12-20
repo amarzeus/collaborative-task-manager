@@ -2,7 +2,7 @@
  * SOTA Dashboard - State-of-the-art task management dashboard
  */
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     CheckCircle,
@@ -13,7 +13,7 @@ import {
     TrendingUp,
     BarChart3,
     Activity,
-    Calendar,
+    ArrowUpDown,
 } from 'lucide-react';
 import {
     useTasks,
@@ -22,6 +22,7 @@ import {
     useDeleteTask,
 } from '../hooks/useTasks';
 import { useAuth } from '../hooks/useAuth';
+import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -29,7 +30,7 @@ import { Button } from '../components/ui/Button';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskCard } from '../components/tasks/TaskCard';
 
-// New dashboard components
+// Dashboard components
 import { ProductivityRing } from '../components/dashboard/ProductivityRing';
 import { StatsCard } from '../components/dashboard/StatsCard';
 import { TrendChart } from '../components/dashboard/TrendChart';
@@ -37,12 +38,14 @@ import { PriorityDonut } from '../components/dashboard/PriorityDonut';
 import { QuickActions } from '../components/dashboard/QuickActions';
 import { ActivityFeed } from '../components/dashboard/ActivityFeed';
 import { UpcomingDeadlines } from '../components/dashboard/UpcomingDeadlines';
+import { FilterPills } from '../components/dashboard/FilterPills';
 
 import type {
     Task,
     CreateTaskInput,
     UpdateTaskInput,
     Status,
+    Priority,
 } from '../types/index';
 
 export function DashboardPage() {
@@ -56,68 +59,21 @@ export function DashboardPage() {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'assigned' | 'created' | 'overdue'>('assigned');
-    const [sortByDate, setSortByDate] = useState<'asc' | 'desc'>('asc');
 
-    // Compute all dashboard stats
-    const dashboardData = useMemo(() => {
-        if (!tasks || !user) return null;
+    // Filter and sort state
+    const [filterPriority, setFilterPriority] = useState<Priority | undefined>();
+    const [filterStatus, setFilterStatus] = useState<Status | undefined>();
+    const [sortBy, setSortBy] = useState<'dueDate' | 'title' | 'priority' | 'status' | 'createdAt'>('dueDate');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-        const myTasks = tasks.filter((t) => t.assignedToId === user.id);
-        const createdTasks = tasks.filter((t) => t.creatorId === user.id);
-        const overdueTasks = tasks.filter(
-            (t) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED'
-        );
-        const completedTasks = tasks.filter((t) => t.status === 'COMPLETED');
-        const inProgressTasks = myTasks.filter((t) => t.status === 'IN_PROGRESS');
-        const todoTasks = myTasks.filter((t) => t.status === 'TODO');
-
-        // Priority distribution
-        const priorityData = {
-            low: tasks.filter((t) => t.priority === 'LOW' && t.status !== 'COMPLETED').length,
-            medium: tasks.filter((t) => t.priority === 'MEDIUM' && t.status !== 'COMPLETED').length,
-            high: tasks.filter((t) => t.priority === 'HIGH' && t.status !== 'COMPLETED').length,
-            urgent: tasks.filter((t) => t.priority === 'URGENT' && t.status !== 'COMPLETED').length,
-        };
-
-        // Generate mock trend data (last 7 days)
-        const trendData = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (6 - i));
-            return {
-                date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-                completed: Math.floor(Math.random() * 5) + (completedTasks.length > 0 ? 1 : 0),
-                created: Math.floor(Math.random() * 4) + (tasks.length > 0 ? 1 : 0),
-            };
-        });
-
-        // Sparkline data (simulated weekly data)
-        const sparklineData = [2, 4, 3, 7, 5, 8, 6];
-
-        // Sort lists by due date
-        const sortFn = (a: Task, b: Task) => {
-            const dateA = new Date(a.dueDate).getTime();
-            const dateB = new Date(b.dueDate).getTime();
-            return sortByDate === 'asc' ? dateA - dateB : dateB - dateA;
-        };
-
-        return {
-            total: tasks.length,
-            assigned: myTasks,
-            created: createdTasks,
-            overdue: overdueTasks,
-            completed: completedTasks.length,
-            inProgress: inProgressTasks.length,
-            todo: todoTasks.length,
-            priorityData,
-            trendData,
-            sparklineData,
-            sortedLists: {
-                assigned: [...myTasks].sort(sortFn),
-                created: [...createdTasks].sort(sortFn),
-                overdue: [...overdueTasks].sort(sortFn),
-            }
-        };
-    }, [tasks, user, sortByDate]);
+    // Use extracted dashboard data hook
+    const { dashboardData, filteredTasks } = useDashboardData(
+        tasks,
+        user?.id,
+        { priority: filterPriority, status: filterStatus },
+        sortBy,
+        sortOrder
+    );
 
     const handleCreateTask = async (data: CreateTaskInput) => {
         await createTask.mutateAsync(data);
@@ -151,7 +107,7 @@ export function DashboardPage() {
         return 'Good evening';
     };
 
-    const currentTabTasks = dashboardData?.sortedLists[activeTab] || [];
+    const currentTabTasks = filteredTasks[activeTab] || [];
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -244,13 +200,40 @@ export function DashboardPage() {
                             </div>
                         </CardHeader>
                         <CardBody>
-                            <div className="mb-4 flex justify-end">
-                                <button
-                                    onClick={() => setSortByDate(prev => prev === 'asc' ? 'desc' : 'asc')}
-                                    className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-slate-800/50 px-2 py-1 rounded"
+                            {/* Filter Pills */}
+                            <div className="mb-4 pb-4 border-b border-slate-700/50">
+                                <FilterPills
+                                    selectedPriority={filterPriority}
+                                    selectedStatus={filterStatus}
+                                    onPriorityChange={setFilterPriority}
+                                    onStatusChange={setFilterStatus}
+                                    onClearAll={() => {
+                                        setFilterPriority(undefined);
+                                        setFilterStatus(undefined);
+                                    }}
+                                />
+                            </div>
+
+                            {/* Enhanced Sorting */}
+                            <div className="mb-4 flex flex-wrap items-center gap-3">
+                                <span className="text-xs font-medium text-slate-400">Sort by:</span>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                                    className="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 >
-                                    <Calendar className="w-3 h-3" />
-                                    Sort by Due Date ({sortByDate === 'asc' ? 'Earliest' : 'Latest'})
+                                    <option value="dueDate">Due Date</option>
+                                    <option value="priority">Priority</option>
+                                    <option value="status">Status</option>
+                                    <option value="title">Title</option>
+                                    <option value="createdAt">Created Date</option>
+                                </select>
+                                <button
+                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs transition-colors"
+                                >
+                                    <ArrowUpDown className="w-3 h-3" />
+                                    {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                                 </button>
                             </div>
 

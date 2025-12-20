@@ -59,8 +59,10 @@ export const taskController = {
             // Send notification to assignee
             if (sendNotificationTo) {
                 io.to(`user:${sendNotificationTo}`).emit('notification:new', {
+                    title: 'New Task Assignment',
                     message: `You have been assigned to task: ${task?.title}`,
-                    type: 'ASSIGNMENT',
+                    type: 'task_assigned',
+                    taskId: task?.id,
                 });
             }
 
@@ -92,8 +94,10 @@ export const taskController = {
             // Send notification to new assignee
             if (sendNotificationTo) {
                 io.to(`user:${sendNotificationTo}`).emit('notification:new', {
+                    title: 'Task Reassignment',
                     message: `You have been assigned to task: ${task?.title}`,
-                    type: 'ASSIGNMENT',
+                    type: 'task_assigned',
+                    taskId: task?.id,
                 });
             }
 

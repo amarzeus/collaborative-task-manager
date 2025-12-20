@@ -6,9 +6,11 @@
 import { prisma } from '../lib/prisma.js';
 
 export interface CreateNotificationData {
+    title: string;
     message: string;
     type: string;
     userId: string;
+    taskId?: string;
 }
 
 export const notificationRepository = {
@@ -29,6 +31,14 @@ export const notificationRepository = {
             where: { userId },
             orderBy: { createdAt: 'desc' },
             take: limit,
+            include: {
+                task: {
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                },
+            },
         });
     },
 
