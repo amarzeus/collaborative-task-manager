@@ -15,6 +15,7 @@ import { taskRouter } from './routes/task.routes.js';
 import { userRouter } from './routes/user.routes.js';
 import { notificationRouter } from './routes/notification.routes.js';
 import analyticsRouter from './routes/analytics.routes.js';
+import adminRouter from './routes/admin.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { setupSocketHandlers } from './socket/index.js';
 
@@ -50,6 +51,7 @@ app.use('/api/v1/tasks', taskRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/analytics', analyticsRouter);
+app.use('/api/v1/admin', adminRouter);
 
 // Root route
 app.get('/', (_req, res) => {
@@ -62,7 +64,8 @@ app.get('/', (_req, res) => {
             tasks: '/api/v1/tasks',
             users: '/api/v1/users',
             notifications: '/api/v1/notifications',
-            analytics: '/api/v1/analytics'
+            analytics: '/api/v1/analytics',
+            admin: '/api/v1/admin'
         }
     });
 });

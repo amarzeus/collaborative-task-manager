@@ -3,10 +3,14 @@
  */
 
 // User types
+export type Role = 'USER' | 'TEAM_LEAD' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
+
 export interface User {
     id: string;
     email: string;
     name: string;
+    role: Role;
+    isActive?: boolean;
     createdAt?: string;
 }
 

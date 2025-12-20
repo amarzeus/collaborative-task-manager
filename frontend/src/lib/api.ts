@@ -146,3 +146,131 @@ export const notificationApi = {
         await api.put('/notifications/read-all');
     },
 };
+
+// Admin API
+export interface AdminStats {
+    users: {
+        total: number;
+        active: number;
+        suspended: number;
+        byRole: Record<string, number>;
+    };
+    tasks: {
+        total: number;
+        byStatus: Record<string, number>;
+    };
+    recentUsers: Array<{ id: string; name: string; email: string; createdAt: string }>;
+}
+
+export interface AdminUser {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    isActive: boolean;
+    lastLoginAt: string | null;
+    createdAt: string;
+    manager?: { id: string; name: string } | null;
+    _count?: { directReports: number; createdTasks: number; assignedTasks: number };
+}
+
+export interface PaginatedUsers {
+    users: AdminUser[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+export interface AdminUserFilters {
+    role?: string;
+    isActive?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+}
+
+export const adminApi = {
+    getStats: async (): Promise<AdminStats> => {
+        const response = await api.get<ApiResponse<AdminStats>>('/admin/stats');
+        return response.data.data;
+    },
+
+    getUsers: async (filters?: AdminUserFilters): Promise<PaginatedUsers> => {
+        const params = new URLSearchParams();
+        if (filters) {
+            if (filters.role) params.set('role', filters.role);
+            if (filters.isActive !== undefined) params.set('isActive', String(filters.isActive));
+            if (filters.search) params.set('search', filters.search);
+            if (filters.page) params.set('page', String(filters.page));
+            if (filters.limit) params.set('limit', String(filters.limit));
+        }
+        const response = await api.get<ApiResponse<PaginatedUsers>>(`/admin/users?${params.toString()}`);
+        return response.data.data;
+    },
+
+    getUserById: async (id: string): Promise<AdminUser> => {
+        const response = await api.get<ApiResponse<AdminUser>>(`/admin/users/${id}`);
+        return response.data.data;
+    },
+
+    createUser: async (data: { email: string; name: string; password: string; role?: string }): Promise<AdminUser> => {
+        const response = await api.post<ApiResponse<AdminUser>>('/admin/users', data);
+        return response.data.data;
+    },
+
+    updateUser: async (id: string, data: { name?: string; email?: string; role?: string; isActive?: boolean; managerId?: string | null }): Promise<AdminUser> => {
+        const response = await api.put<ApiResponse<AdminUser>>(`/admin/users/${id}`, data);
+        return response.data.data;
+    },
+
+    suspendUser: async (id: string): Promise<{ success: boolean; message: string }> => {
+        const response = await api.post<{ success: boolean; message: string }>(`/admin/users/${id}/suspend`);
+        return response.data;
+    },
+
+    activateUser: async (id: string): Promise<{ success: boolean; message: string }> => {
+        const response = await api.post<{ success: boolean; message: string }>(`/admin/users/${id}/activate`);
+        return response.data;
+    },
+
+    // Bulk operations
+    bulkTaskOperation: async (data: {
+        action: 'assign' | 'update_status' | 'update_priority' | 'delete' | 'archive';
+        taskIds: string[];
+        data?: { assigneeId?: string; status?: string; priority?: string };
+    }): Promise<{ success: boolean; processed: number; failed: number; errors: Array<{ taskId: string; error: string }> }> => {
+        const response = await api.post<ApiResponse<{ success: boolean; processed: number; failed: number; errors: Array<{ taskId: string; error: string }> }>>('/admin/tasks/bulk', data);
+        return response.data.data;
+    },
+
+    bulkTaskPreview: async (taskIds: string[]): Promise<any> => {
+        const response = await api.post<ApiResponse<any>>('/admin/tasks/bulk/preview', { taskIds });
+        return response.data.data;
+    },
+
+    // Audit logs
+    getAuditLogs: async (filters?: {
+        entityType?: string;
+        actorId?: string;
+        action?: string;
+        startDate?: string;
+        endDate?: string;
+        page?: number;
+        limit?: number;
+    }): Promise<{ logs: any[]; total: number; page: number; limit: number; totalPages: number }> => {
+        const params = new URLSearchParams();
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined) params.set(key, String(value));
+            });
+        }
+        const response = await api.get<ApiResponse<{ logs: any[]; total: number; page: number; limit: number; totalPages: number }>>(`/admin/audit-logs?${params.toString()}`);
+        return response.data.data;
+    },
+
+    getEntityAuditHistory: async (entityType: string, entityId: string): Promise<any[]> => {
+        const response = await api.get<ApiResponse<any[]>>(`/admin/audit-logs/${entityType}/${entityId}`);
+        return response.data.data;
+    },
+};

@@ -19,6 +19,7 @@ const task_routes_js_1 = require("./routes/task.routes.js");
 const user_routes_js_1 = require("./routes/user.routes.js");
 const notification_routes_js_1 = require("./routes/notification.routes.js");
 const analytics_routes_js_1 = __importDefault(require("./routes/analytics.routes.js"));
+const admin_routes_js_1 = __importDefault(require("./routes/admin.routes.js"));
 const error_middleware_js_1 = require("./middleware/error.middleware.js");
 const index_js_1 = require("./socket/index.js");
 // Load environment variables
@@ -50,6 +51,7 @@ app.use('/api/v1/tasks', task_routes_js_1.taskRouter);
 app.use('/api/v1/users', user_routes_js_1.userRouter);
 app.use('/api/v1/notifications', notification_routes_js_1.notificationRouter);
 app.use('/api/v1/analytics', analytics_routes_js_1.default);
+app.use('/api/v1/admin', admin_routes_js_1.default);
 // Root route
 app.get('/', (_req, res) => {
     res.json({
@@ -61,7 +63,8 @@ app.get('/', (_req, res) => {
             tasks: '/api/v1/tasks',
             users: '/api/v1/users',
             notifications: '/api/v1/notifications',
-            analytics: '/api/v1/analytics'
+            analytics: '/api/v1/analytics',
+            admin: '/api/v1/admin'
         }
     });
 });

@@ -9,6 +9,14 @@ export interface CreateUserData {
     email: string;
     password: string;
     name: string;
+    role?: 'USER' | 'TEAM_LEAD' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
+}
+
+export interface UpdateUserData {
+    email?: string;
+    password?: string;
+    name?: string;
+    lastLoginAt?: Date;
 }
 
 export const userRepository = {
@@ -21,9 +29,6 @@ export const userRepository = {
         });
     },
 
-    /**
-     * Find user by ID (includes password for verification)
-     */
     async findById(id: string) {
         return prisma.user.findUnique({
             where: { id },
@@ -31,15 +36,14 @@ export const userRepository = {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
+                isActive: true,
                 password: true,
                 createdAt: true,
             },
         });
     },
 
-    /**
-     * Create a new user
-     */
     async create(data: CreateUserData) {
         return prisma.user.create({
             data,
@@ -47,15 +51,13 @@ export const userRepository = {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
                 createdAt: true,
             },
         });
     },
 
-    /**
-     * Update user profile or password
-     */
-    async update(id: string, data: Partial<CreateUserData>) {
+    async update(id: string, data: UpdateUserData) {
         return prisma.user.update({
             where: { id },
             data,
@@ -63,6 +65,7 @@ export const userRepository = {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
             },
         });
     },

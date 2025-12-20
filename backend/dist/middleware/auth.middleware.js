@@ -26,13 +26,17 @@ async function authenticate(req, _res, next) {
         // Verify token
         const secret = process.env.JWT_SECRET || 'fallback-secret';
         const decoded = jsonwebtoken_1.default.verify(token, secret);
-        // Get user from database
+        // Get user from database with role and active status
         const user = await prisma_js_1.prisma.user.findUnique({
             where: { id: decoded.userId },
-            select: { id: true, email: true, name: true },
+            select: { id: true, email: true, name: true, role: true, isActive: true },
         });
         if (!user) {
             throw errors_js_1.AppError.unauthorized('User not found');
+        }
+        // Check if user is active
+        if (!user.isActive) {
+            throw errors_js_1.AppError.forbidden('Account is suspended');
         }
         // Attach user to request
         req.user = user;

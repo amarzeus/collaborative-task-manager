@@ -18,6 +18,7 @@ import {
     Trash2,
     Check,
     ExternalLink,
+    Shield,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
@@ -101,6 +102,21 @@ export function Layout() {
                             </Link>
                         );
                     })}
+                    {/* Admin link - only visible for admins */}
+                    {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                        <Link
+                            to="/admin"
+                            className={clsx(
+                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                                location.pathname === '/admin'
+                                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            )}
+                        >
+                            <Shield className="w-5 h-5" />
+                            Admin
+                        </Link>
+                    )}
                 </nav>
 
                 {/* User section removed as per refinement plan */}
@@ -306,6 +322,22 @@ export function Layout() {
                                         </Link>
                                     );
                                 })}
+                                {/* Admin link in mobile menu */}
+                                {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                                    <Link
+                                        to="/admin"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className={clsx(
+                                            'flex items-center gap-3 px-4 py-3 rounded-lg transition-all',
+                                            location.pathname === '/admin'
+                                                ? 'bg-amber-500/20 text-amber-400'
+                                                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                        )}
+                                    >
+                                        <Shield className="w-5 h-5" />
+                                        Admin
+                                    </Link>
+                                )}
                                 <button
                                     onClick={handleLogout}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"

@@ -132,4 +132,62 @@ export declare const taskQuerySchema: z.ZodObject<{
 export type CreateTaskDto = z.infer<typeof createTaskSchema>;
 export type UpdateTaskDto = z.infer<typeof updateTaskSchema>;
 export type TaskQueryDto = z.infer<typeof taskQuerySchema>;
+export declare const roleEnum: z.ZodEnum<["USER", "TEAM_LEAD", "MANAGER", "ADMIN", "SUPER_ADMIN"]>;
+export declare const adminCreateUserSchema: z.ZodObject<{
+    email: z.ZodString;
+    name: z.ZodString;
+    password: z.ZodString;
+    role: z.ZodDefault<z.ZodEnum<["USER", "TEAM_LEAD", "MANAGER", "ADMIN", "SUPER_ADMIN"]>>;
+}, "strip", z.ZodTypeAny, {
+    email: string;
+    password: string;
+    name: string;
+    role: "USER" | "TEAM_LEAD" | "MANAGER" | "ADMIN" | "SUPER_ADMIN";
+}, {
+    email: string;
+    password: string;
+    name: string;
+    role?: "USER" | "TEAM_LEAD" | "MANAGER" | "ADMIN" | "SUPER_ADMIN" | undefined;
+}>;
+export declare const adminUpdateUserSchema: z.ZodObject<{
+    name: z.ZodOptional<z.ZodString>;
+    email: z.ZodOptional<z.ZodString>;
+    role: z.ZodOptional<z.ZodEnum<["USER", "TEAM_LEAD", "MANAGER", "ADMIN", "SUPER_ADMIN"]>>;
+    isActive: z.ZodOptional<z.ZodBoolean>;
+    managerId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, "strip", z.ZodTypeAny, {
+    email?: string | undefined;
+    name?: string | undefined;
+    role?: "USER" | "TEAM_LEAD" | "MANAGER" | "ADMIN" | "SUPER_ADMIN" | undefined;
+    isActive?: boolean | undefined;
+    managerId?: string | null | undefined;
+}, {
+    email?: string | undefined;
+    name?: string | undefined;
+    role?: "USER" | "TEAM_LEAD" | "MANAGER" | "ADMIN" | "SUPER_ADMIN" | undefined;
+    isActive?: boolean | undefined;
+    managerId?: string | null | undefined;
+}>;
+export declare const adminUserQuerySchema: z.ZodObject<{
+    role: z.ZodOptional<z.ZodEnum<["USER", "TEAM_LEAD", "MANAGER", "ADMIN", "SUPER_ADMIN"]>>;
+    isActive: z.ZodOptional<z.ZodEnum<["true", "false"]>>;
+    search: z.ZodOptional<z.ZodString>;
+    page: z.ZodDefault<z.ZodNumber>;
+    limit: z.ZodDefault<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    page: number;
+    limit: number;
+    search?: string | undefined;
+    role?: "USER" | "TEAM_LEAD" | "MANAGER" | "ADMIN" | "SUPER_ADMIN" | undefined;
+    isActive?: "true" | "false" | undefined;
+}, {
+    search?: string | undefined;
+    role?: "USER" | "TEAM_LEAD" | "MANAGER" | "ADMIN" | "SUPER_ADMIN" | undefined;
+    isActive?: "true" | "false" | undefined;
+    page?: number | undefined;
+    limit?: number | undefined;
+}>;
+export type AdminCreateUserDto = z.infer<typeof adminCreateUserSchema>;
+export type AdminUpdateUserDto = z.infer<typeof adminUpdateUserSchema>;
+export type AdminUserQueryDto = z.infer<typeof adminUserQuerySchema>;
 //# sourceMappingURL=index.d.ts.map

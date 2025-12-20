@@ -4,7 +4,7 @@
  * Used for API request validation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.taskQuerySchema = exports.updateTaskSchema = exports.createTaskSchema = exports.statusEnum = exports.priorityEnum = exports.deleteAccountSchema = exports.changePasswordSchema = exports.updateProfileSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.adminUserQuerySchema = exports.adminUpdateUserSchema = exports.adminCreateUserSchema = exports.roleEnum = exports.taskQuerySchema = exports.updateTaskSchema = exports.createTaskSchema = exports.statusEnum = exports.priorityEnum = exports.deleteAccountSchema = exports.changePasswordSchema = exports.updateProfileSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 // ============== Auth DTOs ==============
 exports.registerSchema = zod_1.z.object({
@@ -54,5 +54,27 @@ exports.taskQuerySchema = zod_1.z.object({
     overdue: zod_1.z.enum(['true', 'false']).optional(),
     sortBy: zod_1.z.enum(['dueDate', 'createdAt', 'priority']).optional(),
     sortOrder: zod_1.z.enum(['asc', 'desc']).optional(),
+});
+// ============== Admin DTOs ==============
+exports.roleEnum = zod_1.z.enum(['USER', 'TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN']);
+exports.adminCreateUserSchema = zod_1.z.object({
+    email: zod_1.z.string().email('Invalid email address'),
+    name: zod_1.z.string().min(1, 'Name is required').max(100, 'Name too long'),
+    password: zod_1.z.string().min(6, 'Password must be at least 6 characters'),
+    role: exports.roleEnum.default('USER'),
+});
+exports.adminUpdateUserSchema = zod_1.z.object({
+    name: zod_1.z.string().min(1, 'Name is required').max(100, 'Name too long').optional(),
+    email: zod_1.z.string().email('Invalid email address').optional(),
+    role: exports.roleEnum.optional(),
+    isActive: zod_1.z.boolean().optional(),
+    managerId: zod_1.z.string().uuid('Invalid manager ID').nullable().optional(),
+});
+exports.adminUserQuerySchema = zod_1.z.object({
+    role: exports.roleEnum.optional(),
+    isActive: zod_1.z.enum(['true', 'false']).optional(),
+    search: zod_1.z.string().optional(),
+    page: zod_1.z.coerce.number().min(1).default(1),
+    limit: zod_1.z.coerce.number().min(1).max(100).default(20),
 });
 //# sourceMappingURL=index.js.map

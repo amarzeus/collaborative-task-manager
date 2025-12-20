@@ -15,9 +15,6 @@ exports.userRepository = {
             where: { email },
         });
     },
-    /**
-     * Find user by ID (includes password for verification)
-     */
     async findById(id) {
         return prisma_js_1.prisma.user.findUnique({
             where: { id },
@@ -25,14 +22,13 @@ exports.userRepository = {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
+                isActive: true,
                 password: true,
                 createdAt: true,
             },
         });
     },
-    /**
-     * Create a new user
-     */
     async create(data) {
         return prisma_js_1.prisma.user.create({
             data,
@@ -40,13 +36,11 @@ exports.userRepository = {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
                 createdAt: true,
             },
         });
     },
-    /**
-     * Update user profile or password
-     */
     async update(id, data) {
         return prisma_js_1.prisma.user.update({
             where: { id },
@@ -55,6 +49,7 @@ exports.userRepository = {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
             },
         });
     },

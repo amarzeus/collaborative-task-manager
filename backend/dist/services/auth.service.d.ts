@@ -2,18 +2,21 @@
  * Authentication Service
  * Handles user registration, login, and profile management
  */
+import { Role } from '@prisma/client';
 import type { RegisterDto, LoginDto, UpdateProfileDto } from '../dtos/index.js';
 export interface AuthResponse {
     user: {
         id: string;
         email: string;
         name: string;
+        role: Role;
     };
     token: string;
 }
 export declare const authService: {
     /**
      * Register a new user
+     * Auto-assigns ADMIN role if email matches configured admin patterns
      * @throws AppError if email already exists
      */
     register(data: RegisterDto): Promise<AuthResponse>;
@@ -30,6 +33,8 @@ export declare const authService: {
         email: string;
         password: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
         createdAt: Date;
     }>;
     /**
@@ -39,6 +44,7 @@ export declare const authService: {
         id: string;
         email: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
     }>;
     /**
      * Change user password

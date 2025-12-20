@@ -20,6 +20,9 @@ A production-ready, full-stack Task Management application with real-time collab
 - **Dashboard**: Personal views for assigned, created, and overdue tasks
 - **Filtering & Sorting**: Filter by status, priority; sort by due date
 - **Responsive Design**: Works seamlessly on desktop and mobile
+- **Role-Based Access Control**: 5-level role hierarchy (User → Admin)
+- **Admin Dashboard**: User management, stats, and system overview
+- **Audit Logging**: Track all admin actions for compliance
 
 ## 🛠️ Tech Stack
 
@@ -164,6 +167,19 @@ npm run dev
 | PUT | `/api/v1/notifications/:id/read` | Mark as read |
 | PUT | `/api/v1/notifications/read-all` | Mark all read |
 
+### Admin (Requires ADMIN role)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/admin/stats` | Dashboard statistics |
+| GET | `/api/v1/admin/users` | List all users (paginated) |
+| POST | `/api/v1/admin/users` | Create new user |
+| PUT | `/api/v1/admin/users/:id` | Update user |
+| POST | `/api/v1/admin/users/:id/suspend` | Suspend user |
+| POST | `/api/v1/admin/users/:id/activate` | Activate user |
+| POST | `/api/v1/admin/tasks/bulk` | Bulk task operations |
+| GET | `/api/v1/admin/audit-logs` | View audit logs |
+
 ## 🔌 Real-time Events (Socket.io)
 
 ### Client Events (Emit)
@@ -255,9 +271,35 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/task_manager
 JWT_SECRET=your-secret-key
 JWT_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:5173
+
+# Admin Configuration (optional)
+# Comma-separated emails that auto-get ADMIN role on registration
+ADMIN_EMAILS=admin@yourcompany.com,admin@example.com
 ```
 
-## 📝 Trade-offs & Assumptions
+## � Admin Features
+
+### Role-Based Access Control (RBAC)
+
+The app supports a 5-level role hierarchy:
+
+| Role | Level | Capabilities |
+|------|-------|-------------|
+| USER | 1 | Create/manage own tasks |
+| TEAM_LEAD | 2 | + View team tasks |
+| MANAGER | 3 | + Assign tasks to team |
+| ADMIN | 4 | + User management, bulk ops |
+| SUPER_ADMIN | 5 | + System configuration |
+
+### Making a User Admin
+
+Three ways to create admin users:
+
+1. **Quick Invite** (Easiest): Use the "Invite Admin" button in Admin Dashboard
+2. **Auto-detect**: Add email to `ADMIN_EMAILS` in `.env` before registration
+3. **Prisma Studio**: Manually update user's role in database
+
+## �📝 Trade-offs & Assumptions
 
 1. **Single database**: For simplicity, not using read replicas
 2. **In-memory sessions**: JWT stateless, no server-side session storage
@@ -269,7 +311,9 @@ FRONTEND_URL=http://localhost:5173
 
 - [x] **Optimistic UI**: Task updates appear instantly before server confirmation
 - [x] **Dockerization**: Full Docker Compose setup included
-- [ ] **Audit Logging**: Not implemented in this version
+- [x] **Audit Logging**: Complete audit trail for admin actions
+- [x] **RBAC**: Role-based access control with 5-level hierarchy
+- [x] **Admin Dashboard**: User management, stats, bulk operations
 
 ## 📄 License
 

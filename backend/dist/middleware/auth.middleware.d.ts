@@ -3,6 +3,7 @@
  * Verifies JWT tokens and attaches user to request
  */
 import { Request, Response, NextFunction } from 'express';
+import { Role } from '@prisma/client';
 export interface JwtPayload {
     userId: string;
     email: string;
@@ -12,6 +13,8 @@ export interface AuthenticatedRequest extends Request {
         id: string;
         email: string;
         name: string;
+        role: Role;
+        isActive: boolean;
     };
 }
 /**

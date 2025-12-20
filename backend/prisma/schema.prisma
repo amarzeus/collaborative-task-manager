@@ -27,14 +27,31 @@ enum Status {
   COMPLETED
 }
 
+/// User roles for access control
+enum Role {
+  USER
+  TEAM_LEAD
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
+}
+
 /// User model for authentication and task ownership
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  name        String
+  role        Role      @default(USER)
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Manager hierarchy
+  managerId     String?
+  manager       User?   @relation("ManagerReports", fields: [managerId], references: [id])
+  directReports User[]  @relation("ManagerReports")
 
   // Relations
   createdTasks  Task[] @relation("CreatedTasks")
@@ -42,6 +59,9 @@ model User {
   notifications Notification[]
   taskHistory   TaskHistory[]
 
+  @@index([role])
+  @@index([isActive])
+  @@index([managerId])
   @@map("users")
 }
 
@@ -111,4 +131,25 @@ model TaskHistory {
   @@index([createdAt])
   @@index([action])
   @@map("task_history")
+}
+
+/// Audit log for tracking all admin and system actions
+model AuditLog {
+  id           String   @id @default(uuid())
+  entityType   String   // User, Task, Team, Settings
+  entityId     String   // ID of the entity
+  action       String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, SUSPEND, ACTIVATE, ROLE_CHANGE
+  actorId      String   // User who performed the action
+  actorEmail   String   // Email for reference after user deletion
+  actorIp      String?  // IP address
+  userAgent    String?  // Browser/client info
+  changes      String?  // JSON of changes: { field: { old, new } }
+  metadata     String?  // JSON of additional context
+  createdAt    DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

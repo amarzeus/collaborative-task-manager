@@ -5,6 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { Role } from '@prisma/client';
 import { AppError } from '../lib/errors.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -18,6 +19,8 @@ export interface AuthenticatedRequest extends Request {
         id: string;
         email: string;
         name: string;
+        role: Role;
+        isActive: boolean;
     };
 }
 
@@ -44,14 +47,19 @@ export async function authenticate(
         const secret = process.env.JWT_SECRET || 'fallback-secret';
         const decoded = jwt.verify(token, secret) as JwtPayload;
 
-        // Get user from database
+        // Get user from database with role and active status
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
-            select: { id: true, email: true, name: true },
+            select: { id: true, email: true, name: true, role: true, isActive: true },
         });
 
         if (!user) {
             throw AppError.unauthorized('User not found');
+        }
+
+        // Check if user is active
+        if (!user.isActive) {
+            throw AppError.forbidden('Account is suspended');
         }
 
         // Attach user to request

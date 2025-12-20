@@ -100,9 +100,11 @@ describe('TaskService', () => {
             expect(result.task).toEqual(taskWithAssignee);
             expect(result.sendNotificationTo).toBe('user-2');
             expect(notification_repository_1.notificationRepository.create).toHaveBeenCalledWith({
+                title: 'New Task Assignment',
                 message: 'You have been assigned to task: Test Task',
-                type: 'ASSIGNMENT',
+                type: 'task_assigned',
                 userId: 'user-2',
+                taskId: 'task-1',
             });
         });
         /**

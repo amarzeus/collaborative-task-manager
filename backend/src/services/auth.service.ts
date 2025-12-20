@@ -5,6 +5,7 @@
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { Role } from '@prisma/client';
 import { userRepository } from '../repositories/user.repository.js';
 import { AppError } from '../lib/errors.js';
 import type { RegisterDto, LoginDto, UpdateProfileDto } from '../dtos/index.js';
@@ -12,11 +13,47 @@ import type { RegisterDto, LoginDto, UpdateProfileDto } from '../dtos/index.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
+/**
+ * Check if an email matches any configured admin email patterns
+ * Supports exact match, wildcard prefix (*@domain.com), or wildcard domain (user@*)
+ */
+function isAdminEmail(email: string): boolean {
+    const adminEmails = process.env.ADMIN_EMAILS || '';
+    if (!adminEmails) return false;
+
+    const patterns = adminEmails.split(',').map(p => p.trim().toLowerCase());
+    const emailLower = email.toLowerCase();
+
+    return patterns.some(pattern => {
+        if (!pattern) return false;
+
+        // Exact match
+        if (pattern === emailLower) return true;
+
+        // Wildcard patterns
+        if (pattern.includes('*')) {
+            // *@domain.com - matches any user at that domain
+            if (pattern.startsWith('*@')) {
+                const domain = pattern.slice(2);
+                return emailLower.endsWith('@' + domain);
+            }
+            // user@* - matches that user at any domain
+            if (pattern.endsWith('@*')) {
+                const user = pattern.slice(0, -2);
+                return emailLower.startsWith(user + '@');
+            }
+        }
+
+        return false;
+    });
+}
+
 export interface AuthResponse {
     user: {
         id: string;
         email: string;
         name: string;
+        role: Role;
     };
     token: string;
 }
@@ -24,6 +61,7 @@ export interface AuthResponse {
 export const authService = {
     /**
      * Register a new user
+     * Auto-assigns ADMIN role if email matches configured admin patterns
      * @throws AppError if email already exists
      */
     async register(data: RegisterDto): Promise<AuthResponse> {
@@ -36,11 +74,15 @@ export const authService = {
         // Hash password
         const hashedPassword = await bcrypt.hash(data.password, 12);
 
-        // Create user
+        // Determine role based on email pattern
+        const role = isAdminEmail(data.email) ? 'ADMIN' : 'USER';
+
+        // Create user with auto-assigned role
         const user = await userRepository.create({
             email: data.email,
             password: hashedPassword,
             name: data.name,
+            role,
         });
 
         // Generate JWT
@@ -64,11 +106,19 @@ export const authService = {
             throw AppError.unauthorized('Invalid email or password');
         }
 
+        // Check if user is active
+        if (!user.isActive) {
+            throw AppError.forbidden('Account is suspended');
+        }
+
         // Verify password
         const isValidPassword = await bcrypt.compare(data.password, user.password);
         if (!isValidPassword) {
             throw AppError.unauthorized('Invalid email or password');
         }
+
+        // Update lastLoginAt
+        await userRepository.update(user.id, { lastLoginAt: new Date() });
 
         // Generate JWT
         const token = jwt.sign(
@@ -82,6 +132,7 @@ export const authService = {
                 id: user.id,
                 email: user.email,
                 name: user.name,
+                role: user.role,
             },
             token,
         };

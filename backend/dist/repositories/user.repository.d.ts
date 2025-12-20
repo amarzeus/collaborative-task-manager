@@ -6,6 +6,13 @@ export interface CreateUserData {
     email: string;
     password: string;
     name: string;
+    role?: 'USER' | 'TEAM_LEAD' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN';
+}
+export interface UpdateUserData {
+    email?: string;
+    password?: string;
+    name?: string;
+    lastLoginAt?: Date;
 }
 export declare const userRepository: {
     /**
@@ -16,35 +23,34 @@ export declare const userRepository: {
         email: string;
         password: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        lastLoginAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        managerId: string | null;
     } | null>;
-    /**
-     * Find user by ID (includes password for verification)
-     */
     findById(id: string): Promise<{
         id: string;
         email: string;
         password: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
         createdAt: Date;
     } | null>;
-    /**
-     * Create a new user
-     */
     create(data: CreateUserData): Promise<{
         id: string;
         email: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
         createdAt: Date;
     }>;
-    /**
-     * Update user profile or password
-     */
-    update(id: string, data: Partial<CreateUserData>): Promise<{
+    update(id: string, data: UpdateUserData): Promise<{
         id: string;
         email: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
     }>;
     /**
      * Get all users (for assignment dropdown)
@@ -62,8 +68,12 @@ export declare const userRepository: {
         email: string;
         password: string;
         name: string;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        lastLoginAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        managerId: string | null;
     }>;
 };
 //# sourceMappingURL=user.repository.d.ts.map

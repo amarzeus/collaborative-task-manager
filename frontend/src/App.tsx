@@ -13,6 +13,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TasksPage } from './pages/TasksPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { CalendarPage } from './pages/CalendarPage';
+import { AdminPage } from './pages/AdminPage';
 
 // Layout
 import { Layout } from './components/layout/Layout';
@@ -102,6 +103,7 @@ function AppRoutes() {
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
 
       {/* Default redirect */}

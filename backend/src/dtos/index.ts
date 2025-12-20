@@ -74,3 +74,35 @@ export const taskQuerySchema = z.object({
 export type CreateTaskDto = z.infer<typeof createTaskSchema>;
 export type UpdateTaskDto = z.infer<typeof updateTaskSchema>;
 export type TaskQueryDto = z.infer<typeof taskQuerySchema>;
+
+// ============== Admin DTOs ==============
+
+export const roleEnum = z.enum(['USER', 'TEAM_LEAD', 'MANAGER', 'ADMIN', 'SUPER_ADMIN']);
+
+export const adminCreateUserSchema = z.object({
+    email: z.string().email('Invalid email address'),
+    name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    role: roleEnum.default('USER'),
+});
+
+export const adminUpdateUserSchema = z.object({
+    name: z.string().min(1, 'Name is required').max(100, 'Name too long').optional(),
+    email: z.string().email('Invalid email address').optional(),
+    role: roleEnum.optional(),
+    isActive: z.boolean().optional(),
+    managerId: z.string().uuid('Invalid manager ID').nullable().optional(),
+});
+
+export const adminUserQuerySchema = z.object({
+    role: roleEnum.optional(),
+    isActive: z.enum(['true', 'false']).optional(),
+    search: z.string().optional(),
+    page: z.coerce.number().min(1).default(1),
+    limit: z.coerce.number().min(1).max(100).default(20),
+});
+
+export type AdminCreateUserDto = z.infer<typeof adminCreateUserSchema>;
+export type AdminUpdateUserDto = z.infer<typeof adminUpdateUserSchema>;
+export type AdminUserQueryDto = z.infer<typeof adminUserQuerySchema>;
+

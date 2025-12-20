@@ -108,6 +108,8 @@ describe('AuthService', () => {
             email: 'test@example.com',
             name: 'Test User',
             password: 'hashed-password',
+            role: 'USER',
+            isActive: true,
         };
 
         /**
@@ -131,6 +133,7 @@ describe('AuthService', () => {
                     id: 'user-1',
                     email: 'test@example.com',
                     name: 'Test User',
+                    role: 'USER',
                 },
                 token: 'mock-jwt-token',
             });
