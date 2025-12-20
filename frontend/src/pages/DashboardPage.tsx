@@ -14,6 +14,7 @@ import {
     BarChart3,
     Activity,
     ArrowUpDown,
+    Calendar,
 } from 'lucide-react';
 import {
     useTasks,
@@ -53,7 +54,7 @@ import type {
 export function DashboardPage() {
     const { user } = useAuth();
     const { data: tasks, isLoading } = useTasks();
-    const { data: analytics, isLoading: analyticsLoading } = useAnalytics();
+    const { data: analytics } = useAnalytics();
     const createTask = useCreateTask();
     const updateTask = useUpdateTask();
     const deleteTask = useDeleteTask();
@@ -118,7 +119,7 @@ export function DashboardPage() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl lg:text-3xl font-bold text-white">
-                        {greeting()}, {user?.name?.split(' ')[0]}! 👋
+                        {greeting()}, {user?.name?.split(' ')[0] || 'User'}! 👋
                     </h1>
                     <p className="text-slate-400 mt-1">
                         Here's an overview of your productivity and tasks.

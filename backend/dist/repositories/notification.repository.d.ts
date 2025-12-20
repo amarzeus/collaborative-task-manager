@@ -3,9 +3,11 @@
  * Data access layer for Notification entity
  */
 export interface CreateNotificationData {
+    title: string;
     message: string;
     type: string;
     userId: string;
+    taskId?: string;
 }
 export declare const notificationRepository: {
     /**
@@ -16,20 +18,29 @@ export declare const notificationRepository: {
         createdAt: Date;
         message: string;
         type: string;
+        title: string;
         userId: string;
         read: boolean;
+        taskId: string | null;
     }>;
     /**
      * Get notifications for a user
      */
-    findByUserId(userId: string, limit?: number): Promise<{
+    findByUserId(userId: string, limit?: number): Promise<({
+        task: {
+            id: string;
+            title: string;
+        } | null;
+    } & {
         id: string;
         createdAt: Date;
         message: string;
         type: string;
+        title: string;
         userId: string;
         read: boolean;
-    }[]>;
+        taskId: string | null;
+    })[]>;
     /**
      * Mark notification as read
      */
@@ -38,8 +49,10 @@ export declare const notificationRepository: {
         createdAt: Date;
         message: string;
         type: string;
+        title: string;
         userId: string;
         read: boolean;
+        taskId: string | null;
     }>;
     /**
      * Mark all notifications as read for a user

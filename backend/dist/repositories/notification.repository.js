@@ -23,6 +23,14 @@ exports.notificationRepository = {
             where: { userId },
             orderBy: { createdAt: 'desc' },
             take: limit,
+            include: {
+                task: {
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                },
+            },
         });
     },
     /**

@@ -7,14 +7,21 @@ export declare const notificationService: {
      * Get notifications for a user
      */
     getUserNotifications(userId: string): Promise<{
-        notifications: {
+        notifications: ({
+            task: {
+                id: string;
+                title: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             message: string;
             type: string;
+            title: string;
             userId: string;
             read: boolean;
-        }[];
+            taskId: string | null;
+        })[];
         unreadCount: number;
     }>;
     /**
@@ -25,8 +32,10 @@ export declare const notificationService: {
         createdAt: Date;
         message: string;
         type: string;
+        title: string;
         userId: string;
         read: boolean;
+        taskId: string | null;
     }>;
     /**
      * Mark all notifications as read

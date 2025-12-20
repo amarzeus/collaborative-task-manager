@@ -73,9 +73,11 @@ exports.taskService = {
         let sendNotificationTo;
         if (data.assignedToId && data.assignedToId !== creatorId) {
             await notification_repository_js_1.notificationRepository.create({
+                title: 'New Task Assignment',
                 message: `You have been assigned to task: ${data.title}`,
-                type: 'ASSIGNMENT',
+                type: 'task_assigned',
                 userId: data.assignedToId,
+                taskId: task.id,
             });
             sendNotificationTo = data.assignedToId;
         }
@@ -118,9 +120,11 @@ exports.taskService = {
             data.assignedToId !== existingTask.assignedToId &&
             data.assignedToId !== userId) {
             await notification_repository_js_1.notificationRepository.create({
+                title: 'Task Reassignment',
                 message: `You have been assigned to task: ${task?.title}`,
-                type: 'ASSIGNMENT',
+                type: 'task_assigned',
                 userId: data.assignedToId,
+                taskId: id,
             });
             sendNotificationTo = data.assignedToId;
         }

@@ -18,6 +18,7 @@ const auth_routes_js_1 = require("./routes/auth.routes.js");
 const task_routes_js_1 = require("./routes/task.routes.js");
 const user_routes_js_1 = require("./routes/user.routes.js");
 const notification_routes_js_1 = require("./routes/notification.routes.js");
+const analytics_routes_js_1 = __importDefault(require("./routes/analytics.routes.js"));
 const error_middleware_js_1 = require("./middleware/error.middleware.js");
 const index_js_1 = require("./socket/index.js");
 // Load environment variables
@@ -48,6 +49,22 @@ app.use('/api/v1/auth', auth_routes_js_1.authRouter);
 app.use('/api/v1/tasks', task_routes_js_1.taskRouter);
 app.use('/api/v1/users', user_routes_js_1.userRouter);
 app.use('/api/v1/notifications', notification_routes_js_1.notificationRouter);
+app.use('/api/v1/analytics', analytics_routes_js_1.default);
+// Root route
+app.get('/', (_req, res) => {
+    res.json({
+        message: 'Welcome to Collaborative Task Manager API',
+        version: '1.0.0',
+        status: 'running',
+        endpoints: {
+            auth: '/api/v1/auth',
+            tasks: '/api/v1/tasks',
+            users: '/api/v1/users',
+            notifications: '/api/v1/notifications',
+            analytics: '/api/v1/analytics'
+        }
+    });
+});
 // Health check
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
