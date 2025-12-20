@@ -26,11 +26,6 @@ interface DashboardData {
         high: number;
         urgent: number;
     };
-    trendData: Array<{
-        date: string;
-        completed: number;
-        created: number;
-    }>;
     sparklineData: number[];
 }
 
@@ -73,18 +68,8 @@ export function useDashboardData(
             urgent: tasks.filter((t) => t.priority === 'URGENT' && t.status !== 'COMPLETED').length,
         };
 
-        // Generate mock trend data (last 7 days) - TODO: Replace with real data in Phase 3
-        const trendData = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (6 - i));
-            return {
-                date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-                completed: Math.floor(Math.random() * 5) + (completedTasks.length > 0 ? 1 : 0),
-                created: Math.floor(Math.random() * 4) + (tasks.length > 0 ? 1 : 0),
-            };
-        });
-
-        // Sparkline data (simulated weekly data)
+        // Note: Trend data should come from analytics API
+        // Sparkline data (simulated weekly data) - will be replaced by real productivity data
         const sparklineData = [2, 4, 3, 7, 5, 8, 6];
 
         // Apply filters
@@ -149,7 +134,6 @@ export function useDashboardData(
             inProgress: inProgressTasks.length,
             todo: todoTasks.length,
             priorityData,
-            trendData,
             sparklineData,
         };
 

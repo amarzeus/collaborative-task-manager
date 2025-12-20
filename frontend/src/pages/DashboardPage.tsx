@@ -23,6 +23,7 @@ import {
 } from '../hooks/useTasks';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useAnalytics } from '../hooks/useAnalytics';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -39,6 +40,7 @@ import { QuickActions } from '../components/dashboard/QuickActions';
 import { ActivityFeed } from '../components/dashboard/ActivityFeed';
 import { UpcomingDeadlines } from '../components/dashboard/UpcomingDeadlines';
 import { FilterPills } from '../components/dashboard/FilterPills';
+import { InsightsPanel } from '../components/dashboard/InsightsPanel';
 
 import type {
     Task,
@@ -51,6 +53,7 @@ import type {
 export function DashboardPage() {
     const { user } = useAuth();
     const { data: tasks, isLoading } = useTasks();
+    const { data: analytics, isLoading: analyticsLoading } = useAnalytics();
     const createTask = useCreateTask();
     const updateTask = useUpdateTask();
     const deleteTask = useDeleteTask();
@@ -270,7 +273,7 @@ export function DashboardPage() {
                                 <h2 className="font-semibold text-white">Task Activity</h2>
                             </CardHeader>
                             <CardBody>
-                                <TrendChart data={dashboardData?.trendData || []} />
+                                <TrendChart data={analytics?.trends || []} />
                             </CardBody>
                         </Card>
 
@@ -316,7 +319,12 @@ export function DashboardPage() {
                         </CardBody>
                     </Card>
 
-                    {/* New Activity Feed in Right Column for Balance */}
+                    {/* Smart Insights */}
+                    {analytics?.insights && analytics.insights.length > 0 && (
+                        <InsightsPanel insights={analytics.insights} />
+                    )}
+
+                    {/* Activity Feed in Right Column for Balance */}
                     <Card className="flex-1">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div className="flex items-center gap-2">
