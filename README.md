@@ -2,6 +2,15 @@
 
 A production-ready, full-stack Task Management application with real-time collaboration features.
 
+## 🌐 Live Demo
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | [https://peaceful-cheesecake-533d96.netlify.app](https://peaceful-cheesecake-533d96.netlify.app) |
+| **Backend API** | [https://taskflow-api-bcel.onrender.com](https://taskflow-api-bcel.onrender.com) |
+
+> **Note**: The backend is hosted on Render's free tier, which may take 30-60 seconds to wake up on first request.
+
 ## 🌟 Features
 
 - **User Authentication**: Secure JWT-based auth with bcrypt password hashing
