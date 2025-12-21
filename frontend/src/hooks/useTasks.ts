@@ -81,10 +81,15 @@ export function useUpdateTask() {
             taskApi.update(id, data),
         // Optimistic update
         onMutate: async ({ id, data }) => {
+            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
             await queryClient.cancelQueries({ queryKey: TASKS_QUERY_KEY });
+            await queryClient.cancelQueries({ queryKey: ['task', id] });
 
+            // Snapshot the previous value
             const previousTasks = queryClient.getQueryData<Task[]>(TASKS_QUERY_KEY);
+            const previousTask = queryClient.getQueryData<Task>(['task', id]);
 
+            // Optimistically update list
             queryClient.setQueryData<Task[]>(TASKS_QUERY_KEY, (old) => {
                 if (!old) return old;
                 return old.map((task) =>
@@ -92,15 +97,26 @@ export function useUpdateTask() {
                 );
             });
 
-            return { previousTasks };
+            // Optimistically update single task view
+            queryClient.setQueryData<Task>(['task', id], (old) => {
+                if (!old) return old;
+                return { ...old, ...data };
+            });
+
+            // Return a context object with the snapshotted value
+            return { previousTasks, previousTask };
         },
-        onError: (_err, _variables, context) => {
+        onError: (_err, variables, context) => {
             if (context?.previousTasks) {
                 queryClient.setQueryData(TASKS_QUERY_KEY, context.previousTasks);
             }
+            if (context?.previousTask) {
+                queryClient.setQueryData(['task', variables.id], context.previousTask);
+            }
         },
-        onSettled: () => {
+        onSettled: (_data, _error, variables) => {
             queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: ['task', variables.id] });
         },
     });
 }

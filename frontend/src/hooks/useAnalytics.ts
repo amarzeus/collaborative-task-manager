@@ -1,10 +1,13 @@
 /**
  * Analytics hook for dashboard data
  * Returns fallback data if API fails to prevent dashboard crash
+ * Includes real-time sync via Socket.io
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { analyticsApi, DashboardAnalytics } from '../lib/analytics-api';
+import { socketClient } from '../lib/socket';
 
 const ANALYTICS_KEY = ['analytics', 'dashboard'];
 
@@ -37,15 +40,36 @@ async function safeFetchAnalytics(): Promise<DashboardAnalytics> {
 /**
  * Hook to fetch dashboard analytics
  * Gracefully handles API failures with fallback data
+ * Syncs in real-time via Socket.io task events
  */
 export function useAnalytics() {
+    const queryClient = useQueryClient();
+
     const query = useQuery({
         queryKey: ANALYTICS_KEY,
         queryFn: safeFetchAnalytics,
-        staleTime: 60000, // 1 minute
-        refetchInterval: 300000, // Refetch every 5 minutes
+        staleTime: 10000, // 10 seconds - more responsive
+        refetchInterval: 30000, // Refetch every 30 seconds for real-time feel
         retry: false, // Don't retry - use fallback immediately
     });
+
+    // Real-time sync: invalidate analytics when tasks change
+    useEffect(() => {
+        const handleTaskChange = () => {
+            // Invalidate to trigger refetch
+            queryClient.invalidateQueries({ queryKey: ANALYTICS_KEY });
+        };
+
+        socketClient.onTaskCreated(handleTaskChange);
+        socketClient.onTaskUpdated(handleTaskChange);
+        socketClient.onTaskDeleted(handleTaskChange);
+
+        return () => {
+            socketClient.offTaskCreated(handleTaskChange);
+            socketClient.offTaskUpdated(handleTaskChange);
+            socketClient.offTaskDeleted(handleTaskChange);
+        };
+    }, [queryClient]);
 
     // Always return data (either real or fallback)
     return {

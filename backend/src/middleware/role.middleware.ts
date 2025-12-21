@@ -13,18 +13,18 @@ import type { AuthenticatedRequest } from './auth.middleware.js';
  * @param allowedRoles - Array of roles that can access the route
  */
 export function requireRole(...allowedRoles: Role[]) {
-    return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
-        if (!req.user) {
-            return next(AppError.unauthorized('Authentication required'));
-        }
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return next(AppError.unauthorized('Authentication required'));
+    }
 
-        const userRole = req.user.role;
-        if (!userRole || !allowedRoles.includes(userRole)) {
-            return next(AppError.forbidden('Insufficient permissions'));
-        }
+    const userRole = req.user.role;
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      return next(AppError.forbidden('Insufficient permissions'));
+    }
 
-        next();
-    };
+    next();
+  };
 }
 
 /**
@@ -32,7 +32,7 @@ export function requireRole(...allowedRoles: Role[]) {
  * Shorthand for common admin-only routes
  */
 export function requireAdmin() {
-    return requireRole(Role.ADMIN, Role.SUPER_ADMIN);
+  return requireRole(Role.ADMIN, Role.SUPER_ADMIN);
 }
 
 /**
@@ -40,14 +40,14 @@ export function requireAdmin() {
  * For routes that managers and above can access
  */
 export function requireManager() {
-    return requireRole(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN);
+  return requireRole(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN);
 }
 
 /**
  * Middleware to require Team Lead or higher role
  */
 export function requireTeamLead() {
-    return requireRole(Role.TEAM_LEAD, Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN);
+  return requireRole(Role.TEAM_LEAD, Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN);
 }
 
 /**
@@ -55,18 +55,18 @@ export function requireTeamLead() {
  * Currently role-based, can be extended to granular permissions
  */
 export function hasPermission(role: Role, requiredRoles: Role[]): boolean {
-    return requiredRoles.includes(role);
+  return requiredRoles.includes(role);
 }
 
 /**
  * Role hierarchy check - higher roles include lower role permissions
  */
 const roleHierarchy: Record<Role, number> = {
-    [Role.USER]: 1,
-    [Role.TEAM_LEAD]: 2,
-    [Role.MANAGER]: 3,
-    [Role.ADMIN]: 4,
-    [Role.SUPER_ADMIN]: 5,
+  [Role.USER]: 1,
+  [Role.TEAM_LEAD]: 2,
+  [Role.MANAGER]: 3,
+  [Role.ADMIN]: 4,
+  [Role.SUPER_ADMIN]: 5,
 };
 
 /**
@@ -75,7 +75,7 @@ const roleHierarchy: Record<Role, number> = {
  * @param requiredRole - The minimum required role
  */
 export function isRoleAtLeast(userRole: Role, requiredRole: Role): boolean {
-    return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
 }
 
 /**
@@ -83,16 +83,16 @@ export function isRoleAtLeast(userRole: Role, requiredRole: Role): boolean {
  * @param minRole - The minimum role required
  */
 export function requireMinRole(minRole: Role) {
-    return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
-        if (!req.user) {
-            return next(AppError.unauthorized('Authentication required'));
-        }
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return next(AppError.unauthorized('Authentication required'));
+    }
 
-        const userRole = req.user.role;
-        if (!userRole || !isRoleAtLeast(userRole, minRole)) {
-            return next(AppError.forbidden('Insufficient permissions'));
-        }
+    const userRole = req.user.role;
+    if (!userRole || !isRoleAtLeast(userRole, minRole)) {
+      return next(AppError.forbidden('Insufficient permissions'));
+    }
 
-        next();
-    };
+    next();
+  };
 }

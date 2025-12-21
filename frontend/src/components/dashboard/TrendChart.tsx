@@ -17,13 +17,10 @@ interface TrendChartProps {
     title?: string;
 }
 
-export function TrendChart({ data, title = 'Task Activity' }: TrendChartProps) {
+export function TrendChart({ data }: Omit<TrendChartProps, 'title'>) {
     return (
-        <div className="w-full">
-            {title && (
-                <h3 className="text-sm font-medium text-slate-400 mb-4">{title}</h3>
-            )}
-            <div className="h-48">
+        <div className="w-full h-full">
+            <div className="h-full min-h-[100px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}

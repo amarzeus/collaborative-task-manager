@@ -23,6 +23,7 @@ interface TaskCardProps {
     onEdit: (task: Task) => void;
     onDelete: (id: string) => void;
     onStatusChange: (id: string, status: Status) => void;
+    onClick?: (task: Task) => void;
     isCreator: boolean;
 }
 
@@ -42,7 +43,7 @@ const statusConfig: Record<Status, { label: string; icon: typeof Circle; color: 
 
 const statusOrder: Status[] = ['TODO', 'IN_PROGRESS', 'REVIEW', 'COMPLETED'];
 
-export function TaskCard({ task, onEdit, onDelete, onStatusChange, isCreator }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onStatusChange, onClick, isCreator }: TaskCardProps) {
     const priority = priorityConfig[task.priority];
     const status = statusConfig[task.status];
     const StatusIcon = status.icon;
@@ -55,7 +56,17 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, isCreator }: 
     const nextStatus = currentStatusIndex < statusOrder.length - 1 ? statusOrder[currentStatusIndex + 1] : null;
 
     return (
-        <Card hover className="p-4 animate-fade-in">
+        <Card
+            hover
+            className="p-4 animate-fade-in cursor-pointer group"
+            onClick={(e) => {
+                // Determine if we should trigger the card click (ignore if clicked on button)
+                const target = e.target as HTMLElement;
+                if (!target.closest('button')) {
+                    onClick?.(task);
+                }
+            }}
+        >
             <div className="flex justify-between items-start gap-4">
                 <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-white truncate mb-1">{task.title}</h3>

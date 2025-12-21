@@ -73,6 +73,7 @@ model Task {
   dueDate     DateTime
   priority    Priority @default(MEDIUM)
   status      Status   @default(TODO)
+  version     Int      @default(1)  // For Optimistic Concurrency Control (OCC)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

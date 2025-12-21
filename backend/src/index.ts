@@ -27,21 +27,23 @@ const httpServer = createServer(app);
 
 // Socket.io setup with CORS
 const io = new Server(httpServer, {
-    cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true,
-    },
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  },
 });
 
 // Make io accessible to routes
 app.set('io', io);
 
 // Middleware
-app.use(cors({
+app.use(
+  cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
-}));
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -55,24 +57,24 @@ app.use('/api/v1/admin', adminRouter);
 
 // Root route
 app.get('/', (_req, res) => {
-    res.json({
-        message: 'Welcome to Collaborative Task Manager API',
-        version: '1.0.0',
-        status: 'running',
-        endpoints: {
-            auth: '/api/v1/auth',
-            tasks: '/api/v1/tasks',
-            users: '/api/v1/users',
-            notifications: '/api/v1/notifications',
-            analytics: '/api/v1/analytics',
-            admin: '/api/v1/admin'
-        }
-    });
+  res.json({
+    message: 'Welcome to Collaborative Task Manager API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      auth: '/api/v1/auth',
+      tasks: '/api/v1/tasks',
+      users: '/api/v1/users',
+      notifications: '/api/v1/notifications',
+      analytics: '/api/v1/analytics',
+      admin: '/api/v1/admin',
+    },
+  });
 });
 
 // Health check
 app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Error handling middleware
@@ -84,8 +86,8 @@ setupSocketHandlers(io);
 // Start server
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📡 Socket.io listening for connections`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📡 Socket.io listening for connections`);
 });
 
 export { app, io };

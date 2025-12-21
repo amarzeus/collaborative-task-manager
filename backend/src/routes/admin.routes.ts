@@ -9,9 +9,9 @@ import { authenticate } from '../middleware/auth.middleware.js';
 import { requireAdmin } from '../middleware/role.middleware.js';
 import { validateBody, validateQuery } from '../middleware/validate.middleware.js';
 import {
-    adminCreateUserSchema,
-    adminUpdateUserSchema,
-    adminUserQuerySchema,
+  adminCreateUserSchema,
+  adminUpdateUserSchema,
+  adminUserQuerySchema,
 } from '../dtos/index.js';
 
 const router = Router();
@@ -32,11 +32,7 @@ router.get('/stats', adminController.getStats);
  * @desc    List all users with filtering and pagination
  * @access  Admin only
  */
-router.get(
-    '/users',
-    validateQuery(adminUserQuerySchema),
-    adminController.listUsers
-);
+router.get('/users', validateQuery(adminUserQuerySchema), adminController.listUsers);
 
 /**
  * @route   GET /api/v1/admin/users/:id
@@ -50,22 +46,14 @@ router.get('/users/:id', adminController.getUserById);
  * @desc    Create a new user
  * @access  Admin only
  */
-router.post(
-    '/users',
-    validateBody(adminCreateUserSchema),
-    adminController.createUser
-);
+router.post('/users', validateBody(adminCreateUserSchema), adminController.createUser);
 
 /**
  * @route   PUT /api/v1/admin/users/:id
  * @desc    Update a user
  * @access  Admin only
  */
-router.put(
-    '/users/:id',
-    validateBody(adminUpdateUserSchema),
-    adminController.updateUser
-);
+router.put('/users/:id', validateBody(adminUpdateUserSchema), adminController.updateUser);
 
 /**
  * @route   POST /api/v1/admin/users/:id/suspend

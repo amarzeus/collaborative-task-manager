@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import {
     useTasks,
@@ -21,6 +22,7 @@ import type { Task, TaskFilters, CreateTaskInput, Status } from '../types/index'
 
 export function TasksPage() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [filters, setFilters] = useState<TaskFilters>({
         sortBy: 'createdAt',
         sortOrder: 'desc',
@@ -100,6 +102,7 @@ export function TasksPage() {
                             onDelete={openDeleteModal}
                             onStatusChange={handleStatusChange}
                             isCreator={task.creatorId === user?.id}
+                            onClick={() => navigate(`/tasks/${task.id}`)}
                         />
                     ))}
                 </div>

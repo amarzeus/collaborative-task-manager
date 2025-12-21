@@ -39,16 +39,16 @@ export function PriorityDonut({ data }: PriorityDonutProps) {
     }
 
     return (
-        <div className="relative">
-            <div className="h-48">
+        <div className="flex items-center h-full w-full">
+            <div className="flex-1 h-full relative min-h-[120px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={chartData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={55}
-                            outerRadius={75}
+                            innerRadius="60%"
+                            outerRadius="80%"
                             paddingAngle={4}
                             dataKey="value"
                             strokeWidth={0}
@@ -72,42 +72,36 @@ export function PriorityDonut({ data }: PriorityDonutProps) {
                             }}
                             labelStyle={{ color: '#f8fafc', fontWeight: 600 }}
                             itemStyle={{ color: '#94a3b8' }}
-                            formatter={(value: number) => [`${value} tasks`, '']}
+                            formatter={(value: number | undefined) => [`${value || 0} tasks`, '']}
                         />
                     </PieChart>
                 </ResponsiveContainer>
 
                 {/* Center label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-3xl font-bold text-white">{total}</span>
-                    <span className="text-xs text-slate-400">Total Tasks</span>
+                    <span className="text-2xl font-bold text-white">{total}</span>
+                    <span className="text-[10px] text-slate-400">Total</span>
                 </div>
             </div>
 
-            {/* Legend */}
-            <div className="grid grid-cols-2 gap-2 mt-4">
+            {/* Legend - Vertical Right Side */}
+            <div className="w-1/3 flex flex-col justify-center gap-1.5 pl-2 pr-1">
                 {PRIORITY_CONFIG.map((config) => {
                     const value = data[config.key as keyof typeof data];
-                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-
                     return (
                         <div
                             key={config.key}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                            style={{ backgroundColor: config.darkColor }}
+                            className="flex items-center gap-1.5"
                         >
                             <div
-                                className="w-2.5 h-2.5 rounded-full"
+                                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: config.color }}
                             />
-                            <span className="text-xs text-slate-300 flex-1">
+                            <span className="text-[10px] text-slate-300 flex-1 truncate">
                                 {config.label}
                             </span>
-                            <span className="text-xs font-medium text-white">
+                            <span className="text-[10px] font-medium text-white">
                                 {value}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                                ({percentage}%)
                             </span>
                         </div>
                     );

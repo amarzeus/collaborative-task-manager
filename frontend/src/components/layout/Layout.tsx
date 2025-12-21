@@ -15,7 +15,6 @@ import {
     CheckCircle2,
     Settings,
     ChevronDown,
-    Trash2,
     Check,
     ExternalLink,
     Shield,
@@ -24,6 +23,7 @@ import clsx from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../../hooks/useNotifications';
 import { ToastContainer } from '../ui/Toast';
+import { CommandPalette, useCommandPalette } from '../ui/CommandPalette';
 
 const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -41,6 +41,7 @@ export function Layout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const commandPalette = useCommandPalette();
 
     const notifRef = useRef<HTMLDivElement>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,36 @@ export function Layout() {
     const handleMarkAsRead = (id: string) => {
         markAsRead.mutate(id);
     };
+
+    // Global keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't trigger shortcuts if user is typing in an input
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+
+            const isMod = e.metaKey || e.ctrlKey;
+
+            if (isMod && e.key === 'd') {
+                e.preventDefault();
+                navigate('/dashboard');
+            } else if (isMod && e.key === 't') {
+                e.preventDefault();
+                navigate('/tasks');
+            } else if (isMod && e.key === ',') {
+                e.preventDefault();
+                navigate('/settings');
+            } else if (isMod && e.key === 'n') {
+                e.preventDefault();
+                // Navigate to tasks and trigger new task modal via URL param
+                navigate('/tasks?action=new');
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [navigate]);
 
     return (
         <div className="min-h-screen flex">
@@ -272,12 +303,13 @@ export function Layout() {
                                             Profile
                                         </Link>
                                         <Link
-                                            to="/profile"
+                                            to="/settings"
                                             onClick={() => setUserMenuOpen(false)}
                                             className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                         >
                                             <Settings className="w-4 h-4" />
                                             Settings
+                                            <kbd className="ml-auto text-xs text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded">⌘,</kbd>
                                         </Link>
                                     </div>
 
@@ -358,6 +390,9 @@ export function Layout() {
 
             {/* Toast notifications */}
             <ToastContainer notifications={toasts} onRemove={removeToast} />
+
+            {/* Command Palette (Cmd+K) */}
+            <CommandPalette isOpen={commandPalette.isOpen} onClose={commandPalette.close} />
         </div>
     );
 }

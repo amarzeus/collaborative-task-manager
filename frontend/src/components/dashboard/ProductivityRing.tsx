@@ -52,6 +52,10 @@ export function ProductivityRing({
     const circumference = radius * 2 * Math.PI;
     const offset = circumference - (animatedPercentage / 100) * circumference;
 
+    // Font size calculations based on size
+    const percentFontSize = Math.max(16, size / 4.5);
+    const labelFontSize = Math.max(10, size / 14);
+
     // Color based on productivity level
     const getColor = () => {
         if (animatedPercentage >= 80) return { stroke: '#10b981', glow: 'rgba(16, 185, 129, 0.4)' };
@@ -71,7 +75,7 @@ export function ProductivityRing({
     const label = getLabel();
 
     return (
-        <div className="relative flex flex-col items-center justify-center p-6">
+        <div className="relative flex flex-col items-center justify-center p-2">
             {/* Glow effect behind ring */}
             <div
                 className="absolute inset-0 rounded-full opacity-30 blur-2xl transition-all duration-500"
@@ -80,60 +84,68 @@ export function ProductivityRing({
                 }}
             />
 
-            <svg
-                width={size}
-                height={size}
-                className="transform -rotate-90 drop-shadow-lg"
-            >
-                {/* Background circle */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="transparent"
-                    stroke="rgba(51, 65, 85, 0.5)"
-                    strokeWidth={strokeWidth}
-                />
+            <div className="relative">
+                <svg
+                    width={size}
+                    height={size}
+                    className="transform -rotate-90 drop-shadow-lg"
+                >
+                    {/* Background circle */}
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        fill="transparent"
+                        stroke="rgba(51, 65, 85, 0.5)"
+                        strokeWidth={strokeWidth}
+                    />
 
-                {/* Animated progress circle */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="transparent"
-                    stroke={colors.stroke}
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    style={{
-                        transition: 'stroke-dashoffset 0.5s ease-out, stroke 0.5s ease',
-                        filter: `drop-shadow(0 0 8px ${colors.glow})`,
-                    }}
-                />
-            </svg>
+                    {/* Animated progress circle */}
+                    <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={radius}
+                        fill="transparent"
+                        stroke={colors.stroke}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        style={{
+                            transition: 'stroke-dashoffset 0.5s ease-out, stroke 0.5s ease',
+                            filter: `drop-shadow(0 0 8px ${colors.glow})`,
+                        }}
+                    />
+                </svg>
 
-            {/* Center content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-bold text-white tabular-nums">
-                    {animatedPercentage}%
-                </span>
-                <span className="text-sm text-slate-400 mt-1">
-                    Productivity
-                </span>
+                {/* Center content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span
+                        className="font-bold text-white tabular-nums"
+                        style={{ fontSize: `${percentFontSize}px` }}
+                    >
+                        {animatedPercentage}%
+                    </span>
+                    <span
+                        className="text-slate-400 mt-0.5"
+                        style={{ fontSize: `${labelFontSize}px` }}
+                    >
+                        Productivity
+                    </span>
+                </div>
             </div>
 
             {/* Label below ring */}
-            <div className="mt-4 text-center">
-                <span className="text-lg mr-2">{label.emoji}</span>
-                <span className="text-sm font-medium text-slate-300">{label.text}</span>
+            <div className="mt-2 text-center">
+                <span className="text-base mr-1">{label.emoji}</span>
+                <span className="text-xs font-medium text-slate-300">{label.text}</span>
             </div>
 
             {/* Stats below */}
-            <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
-                <span>{completed} completed</span>
+            <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-500">
+                <span>{completed} done</span>
                 <span className="w-1 h-1 rounded-full bg-slate-600" />
-                <span>{total - completed} remaining</span>
+                <span>{total - completed} left</span>
             </div>
         </div>
     );

@@ -2,8 +2,9 @@
  * SOTA Dashboard - State-of-the-art task management dashboard
  */
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { isToday, isThisWeek } from 'date-fns';
 import {
     CheckCircle,
     Clock,
@@ -13,7 +14,6 @@ import {
     TrendingUp,
     BarChart3,
     Activity,
-    ArrowUpDown,
     Calendar,
 } from 'lucide-react';
 import {
@@ -30,17 +30,16 @@ import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { TaskForm } from '../components/tasks/TaskForm';
-import { TaskCard } from '../components/tasks/TaskCard';
 
 // Dashboard components
 import { ProductivityRing } from '../components/dashboard/ProductivityRing';
-import { StatsCard } from '../components/dashboard/StatsCard';
+import { MiniStatsCard } from '../components/dashboard/MiniStatsCard';
+import { MiniTaskRow } from '../components/dashboard/MiniTaskRow';
 import { TrendChart } from '../components/dashboard/TrendChart';
 import { PriorityDonut } from '../components/dashboard/PriorityDonut';
 import { QuickActions } from '../components/dashboard/QuickActions';
 import { ActivityFeed } from '../components/dashboard/ActivityFeed';
 import { UpcomingDeadlines } from '../components/dashboard/UpcomingDeadlines';
-import { FilterPills } from '../components/dashboard/FilterPills';
 import { InsightsPanel } from '../components/dashboard/InsightsPanel';
 
 import type {
@@ -53,6 +52,7 @@ import type {
 
 export function DashboardPage() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const { data: tasks, isLoading } = useTasks();
     const { data: analytics } = useAnalytics();
     const createTask = useCreateTask();
@@ -78,6 +78,15 @@ export function DashboardPage() {
         sortBy,
         sortOrder
     );
+
+    // Calculate derived metrics for MiniStatsCards
+    const derivedMetrics = useMemo(() => {
+        if (!tasks) return { createdToday: 0, dueThisWeek: 0 };
+        return {
+            createdToday: tasks.filter(t => isToday(new Date(t.createdAt))).length,
+            dueThisWeek: tasks.filter(t => isThisWeek(new Date(t.dueDate))).length
+        };
+    }, [tasks]);
 
     const handleCreateTask = async (data: CreateTaskInput) => {
         await createTask.mutateAsync(data);
@@ -114,209 +123,223 @@ export function DashboardPage() {
     const currentTabTasks = filteredTasks[activeTab] || [];
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-4 animate-fade-in">
             {/* Header with Quick Actions */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-white">
+                    <h1 className="text-xl lg:text-2xl font-bold text-white">
                         {greeting()}, {user?.name?.split(' ')[0] || 'User'}! 👋
                     </h1>
-                    <p className="text-slate-400 mt-1">
-                        Here's an overview of your productivity and tasks.
+                    <p className="text-slate-400 text-sm mt-0.5">
+                        Your productivity overview
                     </p>
                 </div>
                 <QuickActions onNewTask={() => setShowNewTaskModal(true)} />
             </div>
 
             {/* Main Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
                 {/* Left Column - Stats & Charts */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 space-y-4">
 
-                    {/* Stats Cards Row */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <StatsCard
+                    {/* Mini Stats Cards Row */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <MiniStatsCard
                             title="Total Tasks"
                             value={dashboardData?.total || 0}
                             icon={ListTodo}
                             color="indigo"
                             sparklineData={dashboardData?.sparklineData}
+                            subtitle="All tasks in system"
+                            detailData={{
+                                items: [
+                                    { label: 'Created Today', value: derivedMetrics.createdToday },
+                                    { label: 'Due This Week', value: derivedMetrics.dueThisWeek },
+                                    { label: 'High Priority', value: dashboardData?.priorityData?.high || 0 },
+                                ],
+                                chartData: dashboardData?.sparklineData?.map((v, i) => ({ name: `D${i + 1}`, value: v })),
+                                linkUrl: '/tasks',
+                                linkLabel: 'View All Tasks',
+                            }}
                         />
-                        <StatsCard
+                        <MiniStatsCard
                             title="In Progress"
                             value={dashboardData?.inProgress || 0}
                             icon={Clock}
                             color="blue"
                             trend={15}
+                            subtitle="Currently active"
+                            detailData={{
+                                items: [
+                                    { label: 'Started Today', value: 2 },
+                                    { label: 'Avg Duration', value: '3 days' },
+                                    { label: 'Assigned to Me', value: filteredTasks.assigned?.filter(t => t.status === 'IN_PROGRESS').length || 0 },
+                                ],
+                                linkUrl: '/tasks?status=IN_PROGRESS',
+                                linkLabel: 'View In Progress',
+                            }}
                         />
-                        <StatsCard
+                        <MiniStatsCard
                             title="Completed"
                             value={dashboardData?.completed || 0}
                             icon={CheckCircle}
                             color="green"
                             trend={8}
+                            subtitle="Tasks done"
+                            detailData={{
+                                items: [
+                                    { label: 'This Week', value: analytics?.productivity?.completedThisWeek || 0, trend: 12 },
+                                    { label: 'This Month', value: analytics?.productivity?.totalCompleted || 0 },
+                                    { label: 'Avg Time', value: `${analytics?.productivity?.avgCompletionDays || 0}d` },
+                                ],
+                                linkUrl: '/tasks?status=COMPLETED',
+                                linkLabel: 'View Completed',
+                            }}
                         />
-                        <StatsCard
+                        <MiniStatsCard
                             title="Overdue"
                             value={dashboardData?.overdue.length || 0}
                             icon={AlertTriangle}
                             color="red"
                             trend={dashboardData?.overdue.length ? -5 : 0}
+                            subtitle="Past due date"
+                            detailData={{
+                                items: [
+                                    { label: 'Critical', value: dashboardData?.overdue.filter(t => t.priority === 'URGENT').length || 0 },
+                                    { label: 'High Priority', value: dashboardData?.overdue.filter(t => t.priority === 'HIGH').length || 0 },
+                                    { label: 'Oldest', value: dashboardData?.overdue[0]?.title?.slice(0, 15) || 'None' },
+                                ],
+                                linkUrl: '/tasks?overdue=true',
+                                linkLabel: 'View Overdue Tasks',
+                            }}
                         />
                     </div>
 
                     {/* Personal Views Tabs */}
-                    <Card className="min-h-[500px]">
-                        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-0">
+                    <Card className="min-h-[250px]">
+                        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-0 py-3">
                             <div className="flex items-center gap-2">
-                                <ListTodo className="w-5 h-5 text-indigo-400" />
-                                <h2 className="font-semibold text-white">My Work</h2>
+                                <ListTodo className="w-4 h-4 text-indigo-400" />
+                                <h2 className="font-semibold text-white text-sm">My Work</h2>
                             </div>
-                            <div className="flex bg-slate-800/50 p-1 rounded-lg">
+                            <div className="flex bg-slate-800/50 p-0.5 rounded-lg border border-slate-700/30">
                                 <button
                                     onClick={() => setActiveTab('assigned')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'assigned'
-                                        ? 'bg-indigo-500 text-white shadow-lg'
-                                        : 'text-slate-400 hover:text-white'
+                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'assigned'
+                                        ? 'bg-indigo-500 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                         }`}
                                 >
                                     Assigned
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('created')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'created'
-                                        ? 'bg-indigo-500 text-white shadow-lg'
-                                        : 'text-slate-400 hover:text-white'
+                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'created'
+                                        ? 'bg-indigo-500 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                         }`}
                                 >
                                     Created
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('overdue')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'overdue'
-                                        ? 'bg-indigo-500 text-white shadow-lg'
-                                        : 'text-slate-400 hover:text-white'
+                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'overdue'
+                                        ? 'bg-indigo-500 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                         }`}
                                 >
                                     Overdue
                                 </button>
                             </div>
                         </CardHeader>
-                        <CardBody>
-                            {/* Filter Pills */}
-                            <div className="mb-4 pb-4 border-b border-slate-700/50">
-                                <FilterPills
-                                    selectedPriority={filterPriority}
-                                    selectedStatus={filterStatus}
-                                    onPriorityChange={setFilterPriority}
-                                    onStatusChange={setFilterStatus}
-                                    onClearAll={() => {
-                                        setFilterPriority(undefined);
-                                        setFilterStatus(undefined);
-                                    }}
-                                />
-                            </div>
-
-                            {/* Enhanced Sorting */}
-                            <div className="mb-4 flex flex-wrap items-center gap-3">
-                                <span className="text-xs font-medium text-slate-400">Sort by:</span>
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                                    className="px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                >
-                                    <option value="dueDate">Due Date</option>
-                                    <option value="priority">Priority</option>
-                                    <option value="status">Status</option>
-                                    <option value="title">Title</option>
-                                    <option value="createdAt">Created Date</option>
-                                </select>
-                                <button
-                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 text-slate-300 text-xs transition-colors"
-                                >
-                                    <ArrowUpDown className="w-3 h-3" />
-                                    {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                                </button>
-                            </div>
-
+                        <CardBody className="pt-2">
                             {currentTabTasks.length > 0 ? (
-                                <div className="space-y-3">
-                                    {currentTabTasks.map(task => (
-                                        <TaskCard
+                                <div className="space-y-1">
+                                    {currentTabTasks.slice(0, 5).map(task => (
+                                        <MiniTaskRow
                                             key={task.id}
                                             task={task}
-                                            onEdit={setEditingTask}
-                                            onDelete={setDeleteConfirm}
-                                            onStatusChange={handleStatusChange}
-                                            isCreator={task.creatorId === user?.id}
+                                            onClick={() => navigate(`/tasks/${task.id}`)}
                                         />
                                     ))}
+                                    {currentTabTasks.length > 5 && (
+                                        <button
+                                            onClick={() => navigate('/tasks')}
+                                            className="w-full text-center text-xs text-slate-500 hover:text-indigo-400 pt-2 transition-colors"
+                                        >
+                                            View {currentTabTasks.length - 5} more...
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
-                                <div className="text-center py-12">
-                                    <div className="w-12 h-12 mx-auto mb-3 bg-slate-800/50 rounded-full flex items-center justify-center">
-                                        <ListTodo className="w-6 h-6 text-slate-600" />
+                                <div className="text-center py-8">
+                                    <div className="w-10 h-10 mx-auto mb-2 bg-slate-800/50 rounded-full flex items-center justify-center">
+                                        <ListTodo className="w-5 h-5 text-slate-600" />
                                     </div>
-                                    <p className="text-slate-400">No tasks found in this view.</p>
+                                    <p className="text-xs text-slate-500">No tasks found.</p>
                                 </div>
                             )}
                         </CardBody>
                     </Card>
 
                     {/* Charts Row */}
-                    <div className="grid lg:grid-cols-5 gap-6">
+                    <div className="grid lg:grid-cols-5 gap-4">
                         {/* Trend Chart - Takes more space */}
                         <Card className="lg:col-span-3">
-                            <CardHeader className="flex flex-row items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-indigo-400" />
-                                <h2 className="font-semibold text-white">Task Activity</h2>
+                            <CardHeader className="flex flex-row items-center gap-2 py-2">
+                                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                                <h2 className="font-medium text-white text-sm">Task Activity</h2>
                             </CardHeader>
-                            <CardBody>
-                                <TrendChart data={analytics?.trends || []} />
+                            <CardBody className="pt-0 pb-3">
+                                <div className="h-32">
+                                    <TrendChart data={analytics?.trends || []} />
+                                </div>
                             </CardBody>
                         </Card>
 
                         {/* Priority Donut */}
                         <Card className="lg:col-span-2">
-                            <CardHeader className="flex flex-row items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-purple-400" />
-                                <h2 className="font-semibold text-white">By Priority</h2>
+                            <CardHeader className="flex flex-row items-center gap-2 py-2">
+                                <BarChart3 className="w-4 h-4 text-purple-400" />
+                                <h2 className="font-medium text-white text-sm">By Priority</h2>
                             </CardHeader>
-                            <CardBody>
-                                <PriorityDonut data={dashboardData?.priorityData || { low: 0, medium: 0, high: 0, urgent: 0 }} />
+                            <CardBody className="pt-0 pb-3">
+                                <div className="h-32">
+                                    <PriorityDonut data={dashboardData?.priorityData || { low: 0, medium: 0, high: 0, urgent: 0 }} />
+                                </div>
                             </CardBody>
                         </Card>
                     </div>
                 </div>
 
                 {/* Right Column - Productivity & Deadlines */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-4">
 
                     {/* Productivity Ring */}
                     <Card className="overflow-hidden">
-                        <CardHeader>
-                            <h2 className="font-semibold text-white text-center">
+                        <CardHeader className="py-2">
+                            <h2 className="font-medium text-white text-sm text-center">
                                 Your Productivity
                             </h2>
                         </CardHeader>
-                        <CardBody className="flex justify-center pb-6">
+                        <CardBody className="flex justify-center pb-4 pt-0">
                             <ProductivityRing
                                 completed={dashboardData?.completed || 0}
                                 total={dashboardData?.total || 1}
+                                size={130}
                             />
                         </CardBody>
                     </Card>
 
                     {/* Upcoming Deadlines */}
                     <Card>
-                        <CardHeader className="flex flex-row items-center gap-2">
-                            <Calendar className="w-5 h-5 text-orange-400" />
-                            <h2 className="font-semibold text-white">Upcoming Deadlines</h2>
+                        <CardHeader className="flex flex-row items-center gap-2 py-2">
+                            <Calendar className="w-4 h-4 text-orange-400" />
+                            <h2 className="font-medium text-white text-sm">Upcoming Deadlines</h2>
                         </CardHeader>
-                        <CardBody>
-                            <UpcomingDeadlines tasks={tasks || []} maxItems={5} />
+                        <CardBody className="pt-0">
+                            <UpcomingDeadlines tasks={tasks || []} maxItems={3} />
                         </CardBody>
                     </Card>
 
@@ -327,20 +350,20 @@ export function DashboardPage() {
 
                     {/* Activity Feed in Right Column for Balance */}
                     <Card className="flex-1">
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader className="flex flex-row items-center justify-between py-2">
                             <div className="flex items-center gap-2">
-                                <Activity className="w-5 h-5 text-emerald-400" />
-                                <h2 className="font-semibold text-white">Recent Activity</h2>
+                                <Activity className="w-4 h-4 text-emerald-400" />
+                                <h2 className="font-medium text-white text-sm">Recent Activity</h2>
                             </div>
                             <Link
                                 to="/tasks"
-                                className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                             >
-                                View all <ArrowRight className="w-4 h-4" />
+                                View all <ArrowRight className="w-3 h-3" />
                             </Link>
                         </CardHeader>
-                        <CardBody>
-                            <ActivityFeed tasks={tasks || []} maxItems={6} />
+                        <CardBody className="pt-0">
+                            <ActivityFeed tasks={tasks || []} maxItems={4} />
                         </CardBody>
                     </Card>
 

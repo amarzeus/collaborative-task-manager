@@ -14,6 +14,7 @@ interface StatsCardProps {
     trend?: number; // Percentage change
     sparklineData?: number[];
     subtitle?: string;
+    onClick?: () => void; // Click handler for navigation
 }
 
 const colorConfig = {
@@ -75,6 +76,7 @@ export function StatsCard({
     trend,
     sparklineData,
     subtitle,
+    onClick,
 }: StatsCardProps) {
     const config = colorConfig[color];
 
@@ -85,55 +87,52 @@ export function StatsCard({
 
     return (
         <div
+            onClick={onClick}
             className={`
-                relative overflow-hidden rounded-2xl p-5
-                bg-gradient-to-br ${config.bg}
+                relative overflow-hidden rounded-xl p-4
+                bg-slate-800/60 backdrop-blur-sm
                 border ${config.border}
-                backdrop-blur-sm
-                transition-all duration-300 ease-out
-                hover:scale-[1.02] hover:shadow-xl ${config.glow}
+                transition-all duration-200 ease-out
+                hover:bg-slate-800/80 hover:shadow-lg ${config.glow}
                 group cursor-pointer
             `}
         >
-            {/* Background decoration */}
-            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/5 blur-2xl group-hover:bg-white/10 transition-all" />
-
-            {/* Header */}
-            <div className="relative flex items-start justify-between">
-                <div className={`p-2.5 rounded-xl ${config.icon} ${config.text}`}>
-                    <Icon className="w-5 h-5" />
+            {/* Header Row */}
+            <div className="flex items-center justify-between">
+                <div className={`p-2 rounded-lg ${config.icon}`}>
+                    <Icon className={`w-4 h-4 ${config.text}`} />
                 </div>
 
                 {trend !== undefined && (
-                    <div className={`flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-emerald-400' : 'text-red-400'
+                    <div className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded ${trend >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
                         }`}>
-                        <span>{trend >= 0 ? '↑' : '↓'}</span>
+                        <span className="text-[10px]">{trend >= 0 ? '▲' : '▼'}</span>
                         <span>{Math.abs(trend)}%</span>
                     </div>
                 )}
             </div>
 
             {/* Value and Title */}
-            <div className="relative mt-4">
-                <p className="text-3xl font-bold text-white tracking-tight tabular-nums">
+            <div className="mt-3">
+                <p className="text-2xl font-bold text-white tracking-tight tabular-nums">
                     {value.toLocaleString()}
                 </p>
-                <p className={`text-sm ${config.text} font-medium mt-1`}>{title}</p>
+                <p className={`text-xs ${config.text} font-medium mt-0.5`}>{title}</p>
                 {subtitle && (
-                    <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{subtitle}</p>
                 )}
             </div>
 
-            {/* Sparkline Chart */}
+            {/* Sparkline Chart - More compact */}
             {chartData && (
-                <div className="mt-4 h-10 -mx-2">
+                <div className="mt-2 h-8 -mx-1">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData}>
                             <Line
                                 type="monotone"
                                 dataKey="value"
                                 stroke={config.chart}
-                                strokeWidth={2}
+                                strokeWidth={1.5}
                                 dot={false}
                                 strokeLinecap="round"
                             />
@@ -141,6 +140,12 @@ export function StatsCard({
                     </ResponsiveContainer>
                 </div>
             )}
+
+            {/* Live indicator */}
+            <div className="absolute top-2 right-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider">Live</span>
+            </div>
         </div>
     );
 }
