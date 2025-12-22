@@ -32,10 +32,10 @@ export function ProfilePage() {
                         {user?.name?.charAt(0).toUpperCase()}
                     </div>
                     <h2 className="mt-4 text-2xl font-bold text-white">{user?.name}</h2>
-                    <p className="text-slate-400">{user?.email}</p>
+                    <p className="mt-1 text-slate-400">{user?.email}</p>
 
-                    {/* Role Badge */}
-                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-500/20 rounded-full">
+                    {/* Role Badge - Increased top margin for better spacing */}
+                    <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/20 rounded-full">
                         <Shield className="w-4 h-4 text-indigo-400" />
                         <span className="text-sm text-indigo-400 font-medium">
                             {user?.role || 'USER'}
@@ -51,30 +51,30 @@ export function ProfilePage() {
                 </CardHeader>
                 <CardBody className="space-y-4">
                     <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                        <div className="p-2 bg-indigo-500/20 rounded-lg">
+                        <div className="flex-shrink-0 p-2.5 bg-indigo-500/20 rounded-lg">
                             <User className="w-5 h-5 text-indigo-400" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="text-sm text-slate-400">Full Name</p>
-                            <p className="text-white font-medium">{user?.name}</p>
+                            <p className="text-white font-medium truncate">{user?.name}</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                        <div className="p-2 bg-indigo-500/20 rounded-lg">
+                        <div className="flex-shrink-0 p-2.5 bg-indigo-500/20 rounded-lg">
                             <Mail className="w-5 h-5 text-indigo-400" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="text-sm text-slate-400">Email Address</p>
-                            <p className="text-white font-medium">{user?.email}</p>
+                            <p className="text-white font-medium truncate">{user?.email}</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                        <div className="p-2 bg-indigo-500/20 rounded-lg">
+                        <div className="flex-shrink-0 p-2.5 bg-indigo-500/20 rounded-lg">
                             <Calendar className="w-5 h-5 text-indigo-400" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="text-sm text-slate-400">Member Since</p>
                             <p className="text-white font-medium">
                                 {user?.createdAt

@@ -136,16 +136,16 @@ export function ProductivityRing({
             </div>
 
             {/* Label below ring */}
-            <div className="mt-2 text-center">
-                <span className="text-base mr-1">{label.emoji}</span>
-                <span className="text-xs font-medium text-slate-300">{label.text}</span>
+            <div className="mt-3 text-center">
+                <span className="text-lg mr-1.5">{label.emoji}</span>
+                <span className="text-sm font-medium text-slate-300">{label.text}</span>
             </div>
 
             {/* Stats below */}
-            <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-500">
-                <span>{completed} done</span>
+            <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
+                <span className="font-medium">{completed} done</span>
                 <span className="w-1 h-1 rounded-full bg-slate-600" />
-                <span>{total - completed} left</span>
+                <span className="font-medium">{total - completed} left</span>
             </div>
         </div>
     );

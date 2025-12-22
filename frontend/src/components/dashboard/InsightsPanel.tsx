@@ -37,19 +37,21 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
 
     return (
         <Card>
-            <CardHeader className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-indigo-400" />
-                <h2 className="font-semibold text-white">Smart Insights</h2>
+            <CardHeader className="flex flex-row items-center gap-2 py-3">
+                <Lightbulb className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                <h2 className="font-semibold text-white text-sm">Smart Insights</h2>
             </CardHeader>
-            <CardBody>
-                <div className="space-y-3">
+            <CardBody className="pt-0">
+                <div className="space-y-2">
                     {insights.map((insight, index) => (
                         <div
                             key={index}
-                            className={`p-4 rounded-lg border-l-4 ${getColor(insight)} transition-all duration-200 hover:scale-[1.02]`}
+                            className={`p-3 rounded-lg border-l-4 ${getColor(insight)} transition-all duration-200 hover:scale-[1.01]`}
                         >
-                            <div className="flex items-start gap-3">
-                                {getIcon(insight)}
+                            <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                    {getIcon(insight)}
+                                </div>
                                 <p className="text-sm text-slate-200 leading-relaxed flex-1">
                                     {insight}
                                 </p>

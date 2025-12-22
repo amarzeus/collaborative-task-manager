@@ -64,11 +64,11 @@ export function DashboardPage() {
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'assigned' | 'created' | 'overdue'>('assigned');
 
-    // Filter and sort state
-    const [filterPriority, setFilterPriority] = useState<Priority | undefined>();
-    const [filterStatus, setFilterStatus] = useState<Status | undefined>();
-    const [sortBy, setSortBy] = useState<'dueDate' | 'title' | 'priority' | 'status' | 'createdAt'>('dueDate');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    // Filter and sort state (setters available for future use)
+    const [filterPriority] = useState<Priority | undefined>();
+    const [filterStatus] = useState<Status | undefined>();
+    const [sortBy] = useState<'dueDate' | 'title' | 'priority' | 'status' | 'createdAt'>('dueDate');
+    const [sortOrder] = useState<'asc' | 'desc'>('asc');
 
     // Use extracted dashboard data hook
     const { dashboardData, filteredTasks } = useDashboardData(
@@ -103,10 +103,6 @@ export function DashboardPage() {
         if (!deleteConfirm) return;
         await deleteTask.mutateAsync(deleteConfirm);
         setDeleteConfirm(null);
-    };
-
-    const handleStatusChange = async (id: string, status: Status) => {
-        await updateTask.mutateAsync({ id, data: { status } });
     };
 
     if (isLoading) {
@@ -223,10 +219,10 @@ export function DashboardPage() {
                                 <ListTodo className="w-4 h-4 text-indigo-400" />
                                 <h2 className="font-semibold text-white text-sm">My Work</h2>
                             </div>
-                            <div className="flex bg-slate-800/50 p-0.5 rounded-lg border border-slate-700/30">
+                            <div className="flex bg-slate-800/70 p-1 rounded-lg border border-slate-700/50">
                                 <button
                                     onClick={() => setActiveTab('assigned')}
-                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'assigned'
+                                    className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'assigned'
                                         ? 'bg-indigo-500 text-white shadow-sm'
                                         : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                         }`}
@@ -235,7 +231,7 @@ export function DashboardPage() {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('created')}
-                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'created'
+                                    className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'created'
                                         ? 'bg-indigo-500 text-white shadow-sm'
                                         : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                         }`}
@@ -244,7 +240,7 @@ export function DashboardPage() {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('overdue')}
-                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === 'overdue'
+                                    className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'overdue'
                                         ? 'bg-indigo-500 text-white shadow-sm'
                                         : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                                         }`}
@@ -273,11 +269,12 @@ export function DashboardPage() {
                                     )}
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <div className="w-10 h-10 mx-auto mb-2 bg-slate-800/50 rounded-full flex items-center justify-center">
-                                        <ListTodo className="w-5 h-5 text-slate-600" />
+                                <div className="flex flex-col items-center justify-center py-8">
+                                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-800/50 mb-3">
+                                        <ListTodo className="w-5 h-5 text-slate-500" />
                                     </div>
-                                    <p className="text-xs text-slate-500">No tasks found.</p>
+                                    <p className="text-sm text-slate-400">No tasks found</p>
+                                    <p className="text-xs text-slate-600 mt-1">Tasks will appear here</p>
                                 </div>
                             )}
                         </CardBody>

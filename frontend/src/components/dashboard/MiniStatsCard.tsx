@@ -127,24 +127,25 @@ export function MiniStatsCard({
             >
                 {/* Mini View (Always visible) */}
                 <div className={`p-3 transition-all duration-300 ${isHovered ? 'pb-2' : ''}`}>
-                    <div className="flex items-center justify-between gap-2">
-                        <div className={`p-1.5 rounded-md ${config.icon}`}>
+                    <div className="flex items-start gap-2">
+                        <div className={`p-1.5 rounded-md ${config.icon} flex-shrink-0`}>
                             <Icon className={`w-3.5 h-3.5 ${config.text}`} />
                         </div>
-                        <div className="flex-1 min-w-0 text-right">
-                            <p className="text-lg font-bold text-white tabular-nums leading-none">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-lg font-bold text-white tabular-nums leading-none truncate">
                                 {value.toLocaleString()}
                             </p>
-                            <p className={`text-[10px] ${config.text} font-medium truncate mt-0.5`}>
-                                {title}
-                            </p>
-                        </div>
-                        {trend !== undefined && (
-                            <div className={`text-[10px] font-medium px-1 py-0.5 rounded ${trend >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                                }`}>
-                                {trend >= 0 ? '▲' : '▼'}{Math.abs(trend)}%
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <p className={`text-[10px] ${config.text} font-medium truncate`}>
+                                    {title}
+                                </p>
+                                {trend !== undefined && (
+                                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded flex-shrink-0 ${trend >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                        {trend >= 0 ? '▲' : '▼'}{Math.abs(trend)}%
+                                    </span>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* Expanded Content on Hover */}

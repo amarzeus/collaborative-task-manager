@@ -2,7 +2,7 @@
  * Upcoming Deadlines - Visual timeline of upcoming due dates
  */
 
-import { formatDistanceToNow, format, differenceInDays, differenceInHours } from 'date-fns';
+import { format, differenceInDays, differenceInHours } from 'date-fns';
 import { Clock, AlertTriangle, Calendar } from 'lucide-react';
 import type { Task } from '../../types';
 
@@ -22,10 +22,12 @@ export function UpcomingDeadlines({ tasks, maxItems = 5 }: UpcomingDeadlinesProp
 
     if (upcomingTasks.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                <Calendar className="w-10 h-10 mb-3 opacity-50" />
+            <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-800/50 mb-3">
+                    <Calendar className="w-6 h-6 opacity-60" />
+                </div>
                 <p className="text-sm">No upcoming deadlines</p>
-                <p className="text-xs mt-1">You're all caught up! 🎉</p>
+                <p className="text-xs mt-1 text-slate-600">You're all caught up! 🎉</p>
             </div>
         );
     }

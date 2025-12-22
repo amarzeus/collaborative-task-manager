@@ -44,35 +44,38 @@ export function TaskFiltersBar({ filters, onChange }: TaskFiltersBarProps) {
     };
 
     return (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-4">
-            {/* Filter row */}
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+            {/* Single row layout for all controls */}
             <div className="flex flex-wrap items-center gap-3">
-                <Filter className="w-4 h-4 text-slate-400" />
+                {/* Filter icon and dropdowns */}
+                <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />
 
-                {/* Status filter */}
-                <select
-                    value={filters.status || ''}
-                    onChange={(e) => onChange({ ...filters, status: (e.target.value as Status) || undefined })}
-                    className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    {statuses.map((s) => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                </select>
+                    {/* Status filter */}
+                    <select
+                        value={filters.status || ''}
+                        onChange={(e) => onChange({ ...filters, status: (e.target.value as Status) || undefined })}
+                        className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        {statuses.map((s) => (
+                            <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                    </select>
 
-                {/* Priority filter */}
-                <select
-                    value={filters.priority || ''}
-                    onChange={(e) => onChange({ ...filters, priority: (e.target.value as Priority) || undefined })}
-                    className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    {priorities.map((p) => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
-                    ))}
-                </select>
+                    {/* Priority filter */}
+                    <select
+                        value={filters.priority || ''}
+                        onChange={(e) => onChange({ ...filters, priority: (e.target.value as Priority) || undefined })}
+                        className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        {priorities.map((p) => (
+                            <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                    </select>
+                </div>
 
                 {/* Quick filters */}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => onChange({ ...filters, assignedToMe: !filters.assignedToMe })}
                         className={clsx(
@@ -108,6 +111,29 @@ export function TaskFiltersBar({ filters, onChange }: TaskFiltersBarProps) {
                     </button>
                 </div>
 
+                {/* Spacer to push sort controls to the right */}
+                <div className="flex-grow" />
+
+                {/* Sort controls - aligned to the right */}
+                <div className="flex items-center gap-2">
+                    <ArrowUpDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    <select
+                        value={filters.sortBy || 'createdAt'}
+                        onChange={(e) => onChange({ ...filters, sortBy: e.target.value as TaskFilters['sortBy'] })}
+                        className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        {sortOptions.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={() => onChange({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
+                        className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white hover:bg-slate-600 transition-colors"
+                    >
+                        {filters.sortOrder === 'asc' ? '↑' : '↓'}
+                    </button>
+                </div>
+
                 {/* Clear filters */}
                 {hasActiveFilters && (
                     <button
@@ -118,27 +144,6 @@ export function TaskFiltersBar({ filters, onChange }: TaskFiltersBarProps) {
                         <X className="w-4 h-4" />
                     </button>
                 )}
-            </div>
-
-            {/* Sort row */}
-            <div className="flex items-center gap-3">
-                <ArrowUpDown className="w-4 h-4 text-slate-400" />
-                <span className="text-sm text-slate-400">Sort by:</span>
-                <select
-                    value={filters.sortBy || 'createdAt'}
-                    onChange={(e) => onChange({ ...filters, sortBy: e.target.value as TaskFilters['sortBy'] })}
-                    className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    {sortOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                </select>
-                <button
-                    onClick={() => onChange({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
-                    className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white hover:bg-slate-600 transition-colors"
-                >
-                    {filters.sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
-                </button>
             </div>
         </div>
     );

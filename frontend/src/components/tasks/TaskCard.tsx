@@ -135,9 +135,9 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onClick, isCr
             </div>
 
             {/* Assignee */}
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                <div className="flex items-center gap-1">
-                    <User className="w-3 h-3" />
+            <div className="mt-4 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" />
                     <span>
                         {task.assignedTo ? task.assignedTo.name : 'Unassigned'}
                     </span>

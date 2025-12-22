@@ -68,24 +68,24 @@ export function LoginPage() {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                <Mail className="absolute left-3 top-[13px] w-5 h-5 text-slate-500 pointer-events-none" />
                                 <Input
                                     type="email"
                                     placeholder="Email address"
-                                    className="pl-10"
+                                    className="pl-11"
                                     {...register('email')}
                                     error={errors.email?.message}
                                 />
                             </div>
 
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                <Lock className="absolute left-3 top-[13px] w-5 h-5 text-slate-500 pointer-events-none" />
                                 <Input
                                     type="password"
                                     placeholder="Password"
-                                    className="pl-10"
+                                    className="pl-11"
                                     {...register('password')}
                                     error={errors.password?.message}
                                 />

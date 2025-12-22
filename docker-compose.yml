@@ -42,12 +42,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+        VITE_SOCKET_URL: ""
     container_name: taskflow-web
-    environment:
-      VITE_API_URL: http://localhost:3001/api/v1
-      VITE_SOCKET_URL: http://localhost:3001
     ports:
-      - "3000:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: unless-stopped

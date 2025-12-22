@@ -12,11 +12,10 @@ import {
     addMonths,
     subMonths
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { useTasks } from '../hooks/useTasks';
 import { Card } from '../components/ui/Card';
 import clsx from 'clsx';
-import { TaskCard } from '../components/tasks/TaskCard';
 import { Modal } from '../components/ui/Modal';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import type { Task } from '../types';

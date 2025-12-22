@@ -6,7 +6,7 @@ A production-ready, full-stack Task Management application with real-time collab
 
 | Service | URL |
 |---------|-----|
-| **Frontend** | [https://peaceful-cheesecake-533d96.netlify.app](https://peaceful-cheesecake-533d96.netlify.app) |
+| **Frontend** | [https://peaceful-cheesecake-533d096.netlify.app](https://peaceful-cheesecake-533d96.netlify.app) |
 | **Backend API** | [https://taskflow-api-bcel.onrender.com](https://taskflow-api-bcel.onrender.com) |
 
 > **Note**: The backend is hosted on Render's free tier, which may take 30-60 seconds to wake up on first request.
@@ -80,10 +80,21 @@ cd collaborative-task-manager
 # Start all services
 docker compose up -d
 
-# Frontend: http://localhost:3000
+# Docker URLs:
+# Frontend: http://localhost:8080
 # Backend: http://localhost:3001
 # Database: PostgreSQL on port 5555
 ```
+
+### Development URLs (npm run dev)
+
+```bash
+# Frontend (Vite dev server): http://localhost:5173
+# Backend (Express): http://localhost:3001
+```
+
+> **Important**: During development, use `http://localhost:5173` for the frontend. 
+> The Vite dev server automatically proxies `/api` requests to the backend.
 
 ### Manual Setup
 

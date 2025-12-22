@@ -70,7 +70,7 @@ export function Layout() {
         markAsRead.mutate(id);
     };
 
-    // Global keyboard shortcuts
+    // Global keyboard shortcuts (using Alt to avoid browser conflicts)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // Don't trigger shortcuts if user is typing in an input
@@ -78,21 +78,26 @@ export function Layout() {
                 return;
             }
 
-            const isMod = e.metaKey || e.ctrlKey;
-
-            if (isMod && e.key === 'd') {
-                e.preventDefault();
-                navigate('/dashboard');
-            } else if (isMod && e.key === 't') {
-                e.preventDefault();
-                navigate('/tasks');
-            } else if (isMod && e.key === ',') {
-                e.preventDefault();
-                navigate('/settings');
-            } else if (isMod && e.key === 'n') {
-                e.preventDefault();
-                // Navigate to tasks and trigger new task modal via URL param
-                navigate('/tasks?action=new');
+            // Alt+Key shortcuts (avoid Ctrl which conflicts with browser)
+            if (e.altKey && !e.ctrlKey && !e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'd':
+                        e.preventDefault();
+                        navigate('/dashboard');
+                        break;
+                    case 't':
+                        e.preventDefault();
+                        navigate('/tasks');
+                        break;
+                    case ',':
+                        e.preventDefault();
+                        navigate('/settings');
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        navigate('/tasks?action=new');
+                        break;
+                }
             }
         };
 
@@ -122,14 +127,14 @@ export function Layout() {
                                 key={item.path}
                                 to={item.path}
                                 className={clsx(
-                                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 relative',
                                     isActive
-                                        ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                        ? 'bg-indigo-500/20 text-indigo-400 border-l-2 border-l-indigo-500'
+                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-2 border-l-transparent'
                                 )}
                             >
-                                <Icon className="w-5 h-5" />
-                                {item.label}
+                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                <span className="truncate">{item.label}</span>
                             </Link>
                         );
                     })}
@@ -138,14 +143,14 @@ export function Layout() {
                         <Link
                             to="/admin"
                             className={clsx(
-                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 relative',
                                 location.pathname === '/admin'
-                                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    ? 'bg-amber-500/20 text-amber-400 border-l-2 border-l-amber-500'
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-2 border-l-transparent'
                             )}
                         >
-                            <Shield className="w-5 h-5" />
-                            Admin
+                            <Shield className="w-5 h-5 flex-shrink-0" />
+                            <span className="truncate">Admin</span>
                         </Link>
                     )}
                 </nav>
@@ -317,10 +322,10 @@ export function Layout() {
                                     <div className="p-2 border-t border-slate-700">
                                         <button
                                             onClick={handleLogout}
-                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
                                         >
-                                            <LogOut className="w-4 h-4" />
-                                            Sign out
+                                            <LogOut className="w-4 h-4 flex-shrink-0" />
+                                            <span>Sign out</span>
                                         </button>
                                     </div>
                                 </div>

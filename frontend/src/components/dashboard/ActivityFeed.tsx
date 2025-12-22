@@ -98,10 +98,12 @@ export function ActivityFeed({ tasks = [], maxItems = 8 }: ActivityFeedProps) {
 
     if (activities.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                <Clock className="w-10 h-10 mb-3 opacity-50" />
+            <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-800/50 mb-3">
+                    <Clock className="w-6 h-6 opacity-60" />
+                </div>
                 <p className="text-sm">No recent activity</p>
-                <p className="text-xs mt-1">Create a task to get started!</p>
+                <p className="text-xs mt-1 text-slate-600">Create a task to get started!</p>
             </div>
         );
     }
@@ -120,21 +122,23 @@ export function ActivityFeed({ tasks = [], maxItems = 8 }: ActivityFeedProps) {
                             animationDelay: `${index * 50}ms`,
                         }}
                     >
-                        <div className={`p-2 rounded-lg ${config.bgColor} ${config.color}`}>
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${config.bgColor} ${config.color}`}>
                             <Icon className="w-4 h-4" />
                         </div>
 
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm text-slate-300">
+                            <p className="text-sm text-slate-300 leading-snug">
                                 <span className="font-medium text-white">
                                     {activity.userName}
                                 </span>{' '}
                                 {config.verb}{' '}
-                                <span className="font-medium text-white truncate">
-                                    "{activity.taskTitle}"
+                                <span className="font-medium text-white">
+                                    "{activity.taskTitle.length > 25
+                                        ? activity.taskTitle.slice(0, 25) + '...'
+                                        : activity.taskTitle}"
                                 </span>
                             </p>
-                            <p className="text-xs text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-1">
                                 {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
                             </p>
                         </div>

@@ -89,7 +89,7 @@ export function QuickActions({ onNewTask }: QuickActionsProps) {
                             key={action.label}
                             onClick={action.onClick}
                             className={`
-                                flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                flex items-center gap-2.5 px-4 py-2.5 rounded-xl
                                 ${action.color}
                                 text-white font-medium text-sm
                                 shadow-lg shadow-black/20
@@ -99,9 +99,9 @@ export function QuickActions({ onNewTask }: QuickActionsProps) {
                             `}
                             title={`Press '${action.shortcut}'`}
                         >
-                            <action.icon className="w-4 h-4" />
-                            <span className="hidden sm:inline">{action.label}</span>
-                            <kbd className="hidden md:inline-flex items-center justify-center w-5 h-5 rounded bg-white/20 text-xs font-mono">
+                            <action.icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="hidden sm:inline whitespace-nowrap">{action.label}</span>
+                            <kbd className="hidden md:inline-flex items-center justify-center w-6 h-6 rounded bg-white/20 text-[10px] font-mono ml-0.5">
                                 {action.shortcut}
                             </kbd>
                         </button>

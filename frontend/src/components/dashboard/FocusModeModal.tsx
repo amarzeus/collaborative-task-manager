@@ -173,7 +173,7 @@ export function FocusModeModal({ isOpen, onClose }: FocusModeModalProps) {
                             <Button
                                 variant="primary"
                                 className="w-full sm:w-auto bg-green-600 hover:bg-green-700 border-green-500"
-                                icon={<CheckCircle className="w-4 h-4" />}
+                                leftIcon={<CheckCircle className="w-4 h-4" />}
                                 onClick={handleCompleteTask}
                             >
                                 Complete Task

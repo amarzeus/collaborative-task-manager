@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { taskApi } from '../lib/api';
 import { socketClient } from '../lib/socket';
 import type { Task, TaskFilters, CreateTaskInput, UpdateTaskInput } from '../types/index';
@@ -24,7 +24,7 @@ export function useTasks(filters?: TaskFilters) {
 
     // Set up real-time listeners
     useEffect(() => {
-        const handleTaskCreated = (task: Task) => {
+        const handleTaskCreated = (_task: Task) => {
             queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
         };
 

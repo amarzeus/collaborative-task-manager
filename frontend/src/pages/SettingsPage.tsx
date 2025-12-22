@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
     User,
-    Mail,
     Save,
     CheckCircle,
     Shield,
@@ -408,13 +407,13 @@ export function SettingsPage() {
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-medium text-slate-300 mb-3">Navigation</h3>
                                     <ShortcutItem keys={['Ctrl', 'K']} description="Open Command Palette" />
-                                    <ShortcutItem keys={['Ctrl', 'D']} description="Go to Dashboard" />
-                                    <ShortcutItem keys={['Ctrl', 'T']} description="Go to Tasks" />
-                                    <ShortcutItem keys={['Ctrl', ',']} description="Open Settings" />
+                                    <ShortcutItem keys={['Alt', 'D']} description="Go to Dashboard" />
+                                    <ShortcutItem keys={['Alt', 'T']} description="Go to Tasks" />
+                                    <ShortcutItem keys={['Alt', ',']} description="Open Settings" />
                                 </div>
                                 <div className="pt-4 border-t border-slate-700 space-y-2">
                                     <h3 className="text-sm font-medium text-slate-300 mb-3">Actions</h3>
-                                    <ShortcutItem keys={['Ctrl', 'N']} description="Create New Task" />
+                                    <ShortcutItem keys={['Alt', 'N']} description="Create New Task" />
                                     <ShortcutItem keys={['Esc']} description="Close Modal / Cancel" />
                                     <ShortcutItem keys={['?']} description="Show Shortcuts Help" />
                                 </div>

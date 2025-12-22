@@ -19,12 +19,12 @@ interface TrendChartProps {
 
 export function TrendChart({ data }: Omit<TrendChartProps, 'title'>) {
     return (
-        <div className="w-full h-full">
-            <div className="h-full min-h-[100px]">
+        <div className="w-full h-full flex flex-col">
+            <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
-                        margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                        margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
                     >
                         <defs>
                             <linearGradient id="completedGradient" x1="0" y1="0" x2="0" y2="1">
@@ -45,13 +45,13 @@ export function TrendChart({ data }: Omit<TrendChartProps, 'title'>) {
                             dataKey="date"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 11 }}
-                            dy={10}
+                            tick={{ fill: '#64748b', fontSize: 10 }}
+                            dy={5}
                         />
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 11 }}
+                            tick={{ fill: '#64748b', fontSize: 10 }}
                         />
                         <Tooltip
                             contentStyle={{
@@ -83,15 +83,15 @@ export function TrendChart({ data }: Omit<TrendChartProps, 'title'>) {
                 </ResponsiveContainer>
             </div>
 
-            {/* Legend */}
-            <div className="flex items-center justify-center gap-6 mt-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <span className="text-xs text-slate-400">Completed</span>
+            {/* Legend - compact inline */}
+            <div className="flex items-center justify-center gap-4 pt-2">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] text-slate-400">Completed</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-indigo-500" />
-                    <span className="text-xs text-slate-400">Created</span>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <span className="text-[10px] text-slate-400">Created</span>
                 </div>
             </div>
         </div>

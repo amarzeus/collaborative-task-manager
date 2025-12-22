@@ -52,17 +52,17 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             {/* Modal content */}
             <div
                 className={clsx(
-                    'relative w-full bg-slate-800 border border-slate-700 rounded-xl shadow-2xl animate-fade-in',
+                    'relative w-full bg-slate-800 border border-slate-700 rounded-xl shadow-2xl animate-fade-in flex flex-col max-h-[90vh]',
                     sizes[size]
                 )}
             >
                 {/* Header */}
                 {title && (
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-                        <h2 className="text-lg font-semibold text-white">{title}</h2>
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 flex-shrink-0">
+                        <h2 className="text-lg font-semibold text-white truncate pr-2">{title}</h2>
                         <button
                             onClick={onClose}
-                            className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -70,7 +70,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
                 )}
 
                 {/* Body */}
-                <div className="p-6">{children}</div>
+                <div className="p-6 overflow-y-auto flex-1">{children}</div>
             </div>
         </div>
     );
