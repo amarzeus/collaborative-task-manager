@@ -78,6 +78,20 @@ export function Layout() {
                 return;
             }
 
+            // "/" for search - opens Command Palette
+            if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                commandPalette.open();
+                return;
+            }
+
+            // "?" for showing keyboard shortcuts (Shift+/)
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                navigate('/settings?tab=keyboard');
+                return;
+            }
+
             // Alt+Key shortcuts (avoid Ctrl which conflicts with browser)
             if (e.altKey && !e.ctrlKey && !e.metaKey) {
                 switch (e.key.toLowerCase()) {
@@ -103,7 +117,7 @@ export function Layout() {
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [navigate]);
+    }, [navigate, commandPalette]);
 
     return (
         <div className="min-h-screen flex">

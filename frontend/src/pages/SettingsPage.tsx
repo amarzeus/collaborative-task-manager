@@ -2,7 +2,8 @@
  * Enhanced Settings Page with tabs for Profile, Security, Notifications, Account
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -62,11 +63,20 @@ const tabs: Tab[] = [
 
 export function SettingsPage() {
     const { user, updateUser, logout } = useAuth();
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<TabId>('profile');
     const [profileSuccess, setProfileSuccess] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
     const [passwordSuccess, setPasswordSuccess] = useState(false);
     const [passwordError, setPasswordError] = useState<string | null>(null);
+
+    // Handle tab query parameter from URL
+    useEffect(() => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam && tabs.some(t => t.id === tabParam)) {
+            setActiveTab(tabParam as TabId);
+        }
+    }, [searchParams]);
 
     // Notification preferences state
     const [notifications, setNotifications] = useState({
@@ -406,6 +416,7 @@ export function SettingsPage() {
                             <CardBody className="space-y-4">
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-medium text-slate-300 mb-3">Navigation</h3>
+                                    <ShortcutItem keys={['/']} description="Search (Open Command Palette)" />
                                     <ShortcutItem keys={['Ctrl', 'K']} description="Open Command Palette" />
                                     <ShortcutItem keys={['Alt', 'D']} description="Go to Dashboard" />
                                     <ShortcutItem keys={['Alt', 'T']} description="Go to Tasks" />
