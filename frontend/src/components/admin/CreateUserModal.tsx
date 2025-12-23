@@ -184,8 +184,8 @@ export function CreateUserModal({ isOpen, onClose, preset = 'custom' }: CreateUs
                                             type="button"
                                             onClick={() => setRole(pConfig.role)}
                                             className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg border-2 transition-all text-sm ${isSelected
-                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                                                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                                : 'border-gray-200 hover:border-gray-300 text-gray-600'
                                                 }`}
                                         >
                                             <PIcon className="w-4 h-4" />
@@ -205,7 +205,7 @@ export function CreateUserModal({ isOpen, onClose, preset = 'custom' }: CreateUs
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                                 placeholder="John Doe"
                             />
                         </div>
@@ -219,7 +219,7 @@ export function CreateUserModal({ isOpen, onClose, preset = 'custom' }: CreateUs
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                                 placeholder="john@example.com"
                             />
                         </div>
@@ -235,7 +235,7 @@ export function CreateUserModal({ isOpen, onClose, preset = 'custom' }: CreateUs
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     minLength={6}
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm"
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm text-gray-900 bg-white"
                                 />
                                 <button
                                     type="button"
@@ -264,7 +264,7 @@ export function CreateUserModal({ isOpen, onClose, preset = 'custom' }: CreateUs
                                 <select
                                     value={role}
                                     onChange={(e) => setRole(e.target.value as Role)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                                 >
                                     {ROLES.map((r) => (
                                         <option key={r} value={r}>
