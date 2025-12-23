@@ -192,7 +192,7 @@ export function SettingsPage() {
                                 {user?.name?.charAt(0).toUpperCase()}
                             </div>
                             <h3 className="mt-3 text-white font-semibold">{user?.name}</h3>
-                            <p className="text-sm text-slate-400">{user?.email}</p>
+                            <p className="text-sm text-slate-400 truncate" title={user?.email}>{user?.email}</p>
                             <div className="mt-4 pt-4 border-t border-slate-700">
                                 <p className="text-xs text-slate-500">
                                     Member since {user?.createdAt
