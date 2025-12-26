@@ -240,12 +240,17 @@ cd backend
 npm test
 ```
 
-| Test File | Tests | Coverage |
-|-----------|-------|----------|
-| `auth.service.test.ts` | 7 | Register, Login, Profile |
-| `task.service.test.ts` | 6 | CRUD, Authorization |
-| `validation.test.ts` | 14 | DTO Validation (Zod) |
-| **Total** | **27** | ✅ All Passing |
+| Test Suite | Tests | Coverage |
+|------------|-------|----------|
+| `auth.service.test.ts` | 13 | Register, Login, Password Change, Delete Account |
+| `task.service.test.ts` | 15 | CRUD, Notifications, Filtering, Sorting |
+| `admin.service.test.ts` | 12 | User CRUD, Suspend/Activate, Role Management |
+| `bulk.service.test.ts` | 9 | Bulk Assign, Status Update, Delete |
+| `notification.service.test.ts` | 5 | Get, Mark Read, Mark All Read |
+| `validation.test.ts` | 14 | DTO Validation (Zod Schemas) |
+| `auth.middleware.test.ts` | 9 | JWT Verification, Token Expiry |
+| `socket.test.ts` | 7 | Real-time Socket.io Handlers |
+| **Total** | **84** | ✅ All Passing |
 
 ### Frontend Tests (Vitest)
 
@@ -261,7 +266,7 @@ npm run test:run
 | `Card.test.tsx` | 4 | Layout Components |
 | **Total** | **15** | ✅ All Passing |
 
-### Total Test Coverage: 42 Tests
+### Total Test Coverage: 99 Tests
 
 ## 🐳 Docker Configuration
 

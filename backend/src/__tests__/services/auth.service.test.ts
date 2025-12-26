@@ -20,6 +20,7 @@ jest.mock('../../repositories/user.repository', () => ({
     findById: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
@@ -201,6 +202,101 @@ describe('AuthService', () => {
 
       expect(userRepository.update).toHaveBeenCalled();
       expect(result).toBeDefined();
+    });
+  });
+
+  describe('changePassword', () => {
+    const mockUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      name: 'Test User',
+      password: 'hashed-current-password',
+    };
+
+    /**
+     * Test 7: Successfully change password with correct current password
+     */
+    it('should successfully change password with correct current password', async () => {
+      (userRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (userRepository.update as jest.Mock).mockResolvedValue({ ...mockUser });
+
+      const result = await authService.changePassword('user-1', 'currentPassword', 'newPassword123');
+
+      expect(bcrypt.compare).toHaveBeenCalledWith('currentPassword', 'hashed-current-password');
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword123', 12);
+      expect(userRepository.update).toHaveBeenCalledWith('user-1', { password: 'hashed-password' });
+      expect(result.success).toBe(true);
+    });
+
+    /**
+     * Test 8: Throw unauthorized error for incorrect current password
+     */
+    it('should throw unauthorized error for incorrect current password', async () => {
+      (userRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        authService.changePassword('user-1', 'wrongPassword', 'newPassword123')
+      ).rejects.toThrow(AppError);
+
+      expect(userRepository.update).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Test 9: Throw not found error for non-existent user
+     */
+    it('should throw not found error for non-existent user', async () => {
+      (userRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        authService.changePassword('non-existent', 'currentPassword', 'newPassword123')
+      ).rejects.toThrow(AppError);
+    });
+  });
+
+  describe('deleteAccount', () => {
+    const mockUser = {
+      id: 'user-1',
+      email: 'test@example.com',
+      name: 'Test User',
+      password: 'hashed-password',
+    };
+
+    /**
+     * Test 10: Successfully delete account with correct password
+     */
+    it('should successfully delete account with correct password', async () => {
+      (userRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (userRepository.delete as jest.Mock).mockResolvedValue({});
+
+      const result = await authService.deleteAccount('user-1', 'correctPassword');
+
+      expect(bcrypt.compare).toHaveBeenCalledWith('correctPassword', 'hashed-password');
+      expect(userRepository.delete).toHaveBeenCalledWith('user-1');
+      expect(result.success).toBe(true);
+    });
+
+    /**
+     * Test 11: Throw unauthorized error for incorrect password
+     */
+    it('should throw unauthorized error for incorrect password', async () => {
+      (userRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(authService.deleteAccount('user-1', 'wrongPassword')).rejects.toThrow(AppError);
+
+      expect(userRepository.delete).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Test 12: Throw not found error for non-existent user
+     */
+    it('should throw not found error for non-existent user', async () => {
+      (userRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(authService.deleteAccount('non-existent', 'password')).rejects.toThrow(AppError);
     });
   });
 });

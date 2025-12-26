@@ -193,4 +193,170 @@ describe('TaskService', () => {
       expect(result.success).toBe(true);
     });
   });
+
+  describe('updateTask', () => {
+    const mockExistingTask = {
+      id: 'task-1',
+      title: 'Original Task',
+      description: 'Original description',
+      assignedToId: 'user-2',
+      creatorId: 'user-1',
+    };
+
+    /**
+     * Test 7: Update task and send notification on reassignment
+     */
+    it('should send notification when task is reassigned to different user', async () => {
+      const updatedTask = {
+        ...mockExistingTask,
+        assignedToId: 'user-3',
+      };
+
+      (taskRepository.findById as jest.Mock).mockResolvedValue(mockExistingTask);
+      (userRepository.findById as jest.Mock).mockResolvedValue({ id: 'user-3', name: 'New Assignee' });
+      (taskRepository.update as jest.Mock).mockResolvedValue(updatedTask);
+      (notificationRepository.create as jest.Mock).mockResolvedValue({});
+
+      const result = await taskService.updateTask(
+        'task-1',
+        { assignedToId: 'user-3' },
+        'user-1'
+      );
+
+      expect(result.sendNotificationTo).toBe('user-3');
+      expect(notificationRepository.create).toHaveBeenCalledWith({
+        title: 'Task Reassignment',
+        message: expect.stringContaining('Original Task'),
+        type: 'task_assigned',
+        userId: 'user-3',
+        taskId: 'task-1',
+      });
+    });
+
+    /**
+     * Test 8: No notification when self-assigning
+     */
+    it('should not send notification when self-assigning task', async () => {
+      const updatedTask = {
+        ...mockExistingTask,
+        assignedToId: 'user-1',
+      };
+
+      (taskRepository.findById as jest.Mock).mockResolvedValue(mockExistingTask);
+      (userRepository.findById as jest.Mock).mockResolvedValue({ id: 'user-1', name: 'Creator' });
+      (taskRepository.update as jest.Mock).mockResolvedValue(updatedTask);
+
+      const result = await taskService.updateTask(
+        'task-1',
+        { assignedToId: 'user-1' },
+        'user-1'
+      );
+
+      expect(result.sendNotificationTo).toBeUndefined();
+      expect(notificationRepository.create).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Test 9: No notification when assignee unchanged
+     */
+    it('should not send notification when updating without changing assignee', async () => {
+      const updatedTask = {
+        ...mockExistingTask,
+        title: 'Updated Title',
+      };
+
+      (taskRepository.findById as jest.Mock).mockResolvedValue(mockExistingTask);
+      (taskRepository.update as jest.Mock).mockResolvedValue(updatedTask);
+
+      const result = await taskService.updateTask(
+        'task-1',
+        { title: 'Updated Title' },
+        'user-1'
+      );
+
+      expect(result.sendNotificationTo).toBeUndefined();
+      expect(notificationRepository.create).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Test 10: Validate assignee exists before update
+     */
+    it('should throw error when new assignee does not exist', async () => {
+      (taskRepository.findById as jest.Mock).mockResolvedValue(mockExistingTask);
+      (userRepository.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        taskService.updateTask('task-1', { assignedToId: 'non-existent' }, 'user-1')
+      ).rejects.toThrow(AppError);
+
+      expect(taskRepository.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getTasks', () => {
+    /**
+     * Test 11: Filter tasks by status
+     */
+    it('should filter tasks by status', async () => {
+      (taskRepository.findAll as jest.Mock).mockResolvedValue([]);
+
+      await taskService.getTasks({ status: 'TODO' }, 'user-1');
+
+      expect(taskRepository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'TODO' })
+      );
+    });
+
+    /**
+     * Test 12: Filter tasks by priority
+     */
+    it('should filter tasks by priority', async () => {
+      (taskRepository.findAll as jest.Mock).mockResolvedValue([]);
+
+      await taskService.getTasks({ priority: 'HIGH' }, 'user-1');
+
+      expect(taskRepository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ priority: 'HIGH' })
+      );
+    });
+
+    /**
+     * Test 13: Filter tasks assigned to current user
+     */
+    it('should filter tasks assigned to current user', async () => {
+      (taskRepository.findAll as jest.Mock).mockResolvedValue([]);
+
+      await taskService.getTasks({ assignedToMe: 'true' }, 'user-1');
+
+      expect(taskRepository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ assignedToId: 'user-1' })
+      );
+    });
+
+    /**
+     * Test 14: Filter overdue tasks
+     */
+    it('should filter overdue tasks', async () => {
+      (taskRepository.findAll as jest.Mock).mockResolvedValue([]);
+
+      await taskService.getTasks({ overdue: 'true' }, 'user-1');
+
+      expect(taskRepository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ overdue: true })
+      );
+    });
+
+    /**
+     * Test 15: Sort tasks by due date
+     */
+    it('should sort tasks by due date', async () => {
+      (taskRepository.findAll as jest.Mock).mockResolvedValue([]);
+
+      await taskService.getTasks({ sortBy: 'dueDate', sortOrder: 'asc' }, 'user-1');
+
+      expect(taskRepository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: 'dueDate', sortOrder: 'asc' })
+      );
+    });
+  });
 });
