@@ -2,6 +2,7 @@
  * Task Card component
  */
 
+import { useMemo } from 'react';
 import { format, isPast, isToday } from 'date-fns';
 import {
     Calendar,
@@ -13,10 +14,12 @@ import {
     CheckCircle,
     Circle,
     RotateCcw,
+    ListChecks,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Task, Priority, Status } from '../../types';
 import { Card } from '../ui/Card';
+import { parseSubtasks } from './SubtaskList';
 
 interface TaskCardProps {
     task: Task;
@@ -54,6 +57,9 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onClick, isCr
 
     const currentStatusIndex = statusOrder.indexOf(task.status);
     const nextStatus = currentStatusIndex < statusOrder.length - 1 ? statusOrder[currentStatusIndex + 1] : null;
+
+    // Parse subtasks from description
+    const subtaskProgress = useMemo(() => parseSubtasks(task.description), [task.description]);
 
     return (
         <Card
@@ -132,6 +138,33 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, onClick, isCr
                     {isOverdue && 'Overdue: '}
                     {format(dueDate, 'MMM d, yyyy')}
                 </span>
+
+                {/* Subtask progress badge */}
+                {subtaskProgress.total > 0 && (
+                    <span
+                        className={clsx(
+                            'inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded-full border',
+                            subtaskProgress.completed === subtaskProgress.total
+                                ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                                : 'border-slate-700 bg-slate-800 text-slate-400'
+                        )}
+                    >
+                        <ListChecks className="w-3 h-3" />
+                        {subtaskProgress.completed}/{subtaskProgress.total}
+                        {/* Mini progress bar */}
+                        <div className="w-8 h-1 bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                                className={clsx(
+                                    'h-full rounded-full transition-all',
+                                    subtaskProgress.completed === subtaskProgress.total
+                                        ? 'bg-green-500'
+                                        : 'bg-indigo-500'
+                                )}
+                                style={{ width: `${(subtaskProgress.completed / subtaskProgress.total) * 100}%` }}
+                            />
+                        </div>
+                    </span>
+                )}
             </div>
 
             {/* Assignee */}

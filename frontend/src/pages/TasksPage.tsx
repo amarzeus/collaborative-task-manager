@@ -1,24 +1,27 @@
 /**
- * Tasks page with full CRUD operations
+ * Tasks page with full CRUD operations and bulk selection
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, CheckSquare, Square, CheckCheck } from 'lucide-react';
 import {
     useTasks,
     useCreateTask,
     useUpdateTask,
     useDeleteTask,
 } from '../hooks/useTasks';
+import { useBulkStatusUpdate, useBulkPriorityUpdate, useBulkDelete } from '../hooks/useBulkTasks';
 import { useAuth } from '../hooks/useAuth';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskFiltersBar } from '../components/tasks/TaskFilters';
+import { BulkActionsToolbar } from '../components/tasks/BulkActionsToolbar';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { TaskListSkeleton } from '../components/ui/Skeleton';
-import type { Task, TaskFilters, CreateTaskInput, Status } from '../types/index';
+import type { Task, TaskFilters, CreateTaskInput, Status, Priority } from '../types/index';
+import clsx from 'clsx';
 
 export function TasksPage() {
     const { user } = useAuth();
@@ -31,10 +34,30 @@ export function TasksPage() {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+    // Selection state
+    const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+    const [selectionMode, setSelectionMode] = useState(false);
+
     const { data: tasks, isLoading } = useTasks(filters);
     const createTask = useCreateTask();
     const updateTask = useUpdateTask();
     const deleteTask = useDeleteTask();
+
+    // Bulk operations
+    const bulkStatusUpdate = useBulkStatusUpdate();
+    const bulkPriorityUpdate = useBulkPriorityUpdate();
+    const bulkDelete = useBulkDelete();
+
+    const isBulkLoading = bulkStatusUpdate.isPending || bulkPriorityUpdate.isPending || bulkDelete.isPending;
+
+    // Check if user can delete selected tasks (must be creator of all)
+    const canBulkDelete = useMemo(() => {
+        if (!tasks || selectedTaskIds.size === 0) return false;
+        return Array.from(selectedTaskIds).every(id => {
+            const task = tasks.find(t => t.id === id);
+            return task && task.creatorId === user?.id;
+        });
+    }, [tasks, selectedTaskIds, user?.id]);
 
     const handleCreate = useCallback(async (data: CreateTaskInput) => {
         await createTask.mutateAsync(data);
@@ -68,6 +91,58 @@ export function TasksPage() {
         setDeleteConfirm(id);
     }, []);
 
+    // Selection handlers
+    const toggleSelection = useCallback((taskId: string) => {
+        setSelectedTaskIds(prev => {
+            const next = new Set(prev);
+            if (next.has(taskId)) {
+                next.delete(taskId);
+            } else {
+                next.add(taskId);
+            }
+            // Exit selection mode if nothing selected
+            if (next.size === 0) {
+                setSelectionMode(false);
+            } else {
+                setSelectionMode(true);
+            }
+            return next;
+        });
+    }, []);
+
+    const selectAll = useCallback(() => {
+        if (!tasks) return;
+        setSelectedTaskIds(new Set(tasks.map(t => t.id)));
+        setSelectionMode(true);
+    }, [tasks]);
+
+    const clearSelection = useCallback(() => {
+        setSelectedTaskIds(new Set());
+        setSelectionMode(false);
+    }, []);
+
+    // Bulk action handlers
+    const handleBulkStatusChange = useCallback(async (status: Status) => {
+        await bulkStatusUpdate.mutateAsync({
+            taskIds: Array.from(selectedTaskIds),
+            status,
+        });
+        clearSelection();
+    }, [selectedTaskIds, bulkStatusUpdate, clearSelection]);
+
+    const handleBulkPriorityChange = useCallback(async (priority: Priority) => {
+        await bulkPriorityUpdate.mutateAsync({
+            taskIds: Array.from(selectedTaskIds),
+            priority,
+        });
+        clearSelection();
+    }, [selectedTaskIds, bulkPriorityUpdate, clearSelection]);
+
+    const handleBulkDelete = useCallback(async () => {
+        await bulkDelete.mutateAsync(Array.from(selectedTaskIds));
+        clearSelection();
+    }, [selectedTaskIds, bulkDelete, clearSelection]);
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -78,12 +153,24 @@ export function TasksPage() {
                         Manage and track all your tasks in one place.
                     </p>
                 </div>
-                <Button
-                    leftIcon={<Plus className="w-4 h-4" />}
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    New Task
-                </Button>
+                <div className="flex items-center gap-2">
+                    {tasks && tasks.length > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={selectionMode ? clearSelection : selectAll}
+                            leftIcon={selectionMode ? <Square className="w-4 h-4" /> : <CheckCheck className="w-4 h-4" />}
+                        >
+                            {selectionMode ? 'Clear' : 'Select All'}
+                        </Button>
+                    )}
+                    <Button
+                        leftIcon={<Plus className="w-4 h-4" />}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        New Task
+                    </Button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -95,15 +182,39 @@ export function TasksPage() {
             ) : tasks?.length ? (
                 <div className="grid gap-4">
                     {tasks.map((task) => (
-                        <TaskCard
-                            key={task.id}
-                            task={task}
-                            onEdit={openEditModal}
-                            onDelete={openDeleteModal}
-                            onStatusChange={handleStatusChange}
-                            isCreator={task.creatorId === user?.id}
-                            onClick={() => navigate(`/tasks/${task.id}`)}
-                        />
+                        <div key={task.id} className="flex items-start gap-3">
+                            {/* Selection checkbox */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelection(task.id);
+                                }}
+                                className={clsx(
+                                    "flex-shrink-0 mt-4 p-1 rounded transition-all",
+                                    selectedTaskIds.has(task.id)
+                                        ? "text-indigo-400"
+                                        : "text-slate-600 hover:text-slate-400"
+                                )}
+                            >
+                                {selectedTaskIds.has(task.id) ? (
+                                    <CheckSquare className="w-5 h-5" />
+                                ) : (
+                                    <Square className="w-5 h-5" />
+                                )}
+                            </button>
+
+                            {/* Task card */}
+                            <div className="flex-1">
+                                <TaskCard
+                                    task={task}
+                                    onEdit={openEditModal}
+                                    onDelete={openDeleteModal}
+                                    onStatusChange={handleStatusChange}
+                                    isCreator={task.creatorId === user?.id}
+                                    onClick={() => navigate(`/tasks/${task.id}`)}
+                                />
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : (
@@ -121,6 +232,19 @@ export function TasksPage() {
                         Create Task
                     </Button>
                 </div>
+            )}
+
+            {/* Bulk Actions Toolbar */}
+            {selectedTaskIds.size > 0 && (
+                <BulkActionsToolbar
+                    selectedCount={selectedTaskIds.size}
+                    onClearSelection={clearSelection}
+                    onStatusChange={handleBulkStatusChange}
+                    onPriorityChange={handleBulkPriorityChange}
+                    onDelete={handleBulkDelete}
+                    isLoading={isBulkLoading}
+                    canDelete={canBulkDelete}
+                />
             )}
 
             {/* Create/Edit Modal */}
@@ -170,3 +294,4 @@ export function TasksPage() {
         </div>
     );
 }
+
