@@ -121,6 +121,15 @@ export const taskApi = {
     delete: async (id: string): Promise<void> => {
         await api.delete(`/tasks/${id}`);
     },
+
+    bulkUpdate: async (params: {
+        taskIds: string[];
+        action: 'update_status' | 'update_priority';
+        data: { status?: string; priority?: string };
+    }): Promise<{ success: boolean; processed: number; failed: number; errors: Array<{ taskId: string; error: string }> }> => {
+        const response = await api.post<ApiResponse<{ success: boolean; processed: number; failed: number; errors: Array<{ taskId: string; error: string }> }>>('/tasks/bulk', params);
+        return response.data.data;
+    },
 };
 
 // User API
@@ -128,6 +137,52 @@ export const userApi = {
     getAll: async (): Promise<User[]> => {
         const response = await api.get<ApiResponse<User[]>>('/users');
         return response.data.data;
+    },
+};
+
+// Template API
+export interface TaskTemplate {
+    id: string;
+    name: string;
+    title: string;
+    description: string;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    isGlobal: boolean;
+    createdAt: string;
+    creator: { id: string; name: string };
+}
+
+export interface CreateTemplateInput {
+    name: string;
+    title: string;
+    description: string;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    isGlobal?: boolean;
+}
+
+export const templateApi = {
+    getAll: async (): Promise<TaskTemplate[]> => {
+        const response = await api.get<ApiResponse<TaskTemplate[]>>('/templates');
+        return response.data.data;
+    },
+
+    getById: async (id: string): Promise<TaskTemplate> => {
+        const response = await api.get<ApiResponse<TaskTemplate>>(`/templates/${id}`);
+        return response.data.data;
+    },
+
+    create: async (data: CreateTemplateInput): Promise<TaskTemplate> => {
+        const response = await api.post<ApiResponse<TaskTemplate>>('/templates', data);
+        return response.data.data;
+    },
+
+    update: async (id: string, data: Partial<CreateTemplateInput>): Promise<TaskTemplate> => {
+        const response = await api.put<ApiResponse<TaskTemplate>>(`/templates/${id}`, data);
+        return response.data.data;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/templates/${id}`);
     },
 };
 

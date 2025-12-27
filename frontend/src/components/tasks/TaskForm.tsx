@@ -1,15 +1,19 @@
 /**
  * Task Form component for creating/editing tasks
+ * Now includes template selection and save-as-template option
  */
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
+import { Save } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input, Textarea, Select } from '../ui/Input';
+import { TemplateSelector } from './TemplateSelector';
 import { useUsers } from '../../hooks/useUsers';
+import { useCreateTemplate, TaskTemplate } from '../../hooks/useTemplates';
 import type { Task, CreateTaskInput, Priority, Status } from '../../types';
 
 const taskSchema = z.object({
@@ -46,11 +50,17 @@ const statusOptions = [
 
 export function TaskForm({ task, onSubmit, onCancel, isLoading }: TaskFormProps) {
     const { data: users } = useUsers();
+    const createTemplate = useCreateTemplate();
+
+    // Save as template state
+    const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+    const [templateName, setTemplateName] = useState('');
 
     const {
         register,
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
     } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
@@ -78,7 +88,30 @@ export function TaskForm({ task, onSubmit, onCancel, isLoading }: TaskFormProps)
         }
     }, [task, reset]);
 
+    // Handle template selection
+    const handleTemplateSelect = (template: TaskTemplate) => {
+        setValue('title', template.title);
+        setValue('description', template.description);
+        setValue('priority', template.priority);
+        // Keep current due date and assignee
+    };
+
     const handleFormSubmit = async (data: TaskFormData) => {
+        // Save as template if checkbox is checked
+        if (saveAsTemplate && templateName.trim()) {
+            try {
+                await createTemplate.mutateAsync({
+                    name: templateName.trim(),
+                    title: data.title,
+                    description: data.description,
+                    priority: data.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
+                    isGlobal: false,
+                });
+            } catch (error) {
+                console.error('Failed to save template:', error);
+            }
+        }
+
         await onSubmit({
             title: data.title,
             description: data.description,
@@ -96,6 +129,14 @@ export function TaskForm({ task, onSubmit, onCancel, isLoading }: TaskFormProps)
 
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+            {/* Template selector for new tasks */}
+            {!task && (
+                <div className="flex items-center justify-between pb-2 border-b border-slate-700">
+                    <span className="text-sm text-slate-400">Quick start from template</span>
+                    <TemplateSelector onSelect={handleTemplateSelect} disabled={isLoading} />
+                </div>
+            )}
+
             <Input
                 label="Title"
                 placeholder="Enter task title"
@@ -105,7 +146,7 @@ export function TaskForm({ task, onSubmit, onCancel, isLoading }: TaskFormProps)
 
             <Textarea
                 label="Description"
-                placeholder="Enter task description"
+                placeholder="Enter task description (use - [ ] for subtasks)"
                 rows={3}
                 {...register('description')}
                 error={errors.description?.message}
@@ -141,14 +182,39 @@ export function TaskForm({ task, onSubmit, onCancel, isLoading }: TaskFormProps)
                 error={errors.assignedToId?.message}
             />
 
+            {/* Save as template option for new tasks */}
+            {!task && (
+                <div className="pt-2 border-t border-slate-700">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={saveAsTemplate}
+                            onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                        />
+                        <Save className="w-4 h-4 text-slate-400" />
+                        <span className="text-sm text-slate-300">Save as template</span>
+                    </label>
+                    {saveAsTemplate && (
+                        <Input
+                            placeholder="Template name (e.g., Bug Report, Feature Request)"
+                            value={templateName}
+                            onChange={(e) => setTemplateName(e.target.value)}
+                            className="mt-2"
+                        />
+                    )}
+                </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="ghost" onClick={onCancel}>
                     Cancel
                 </Button>
-                <Button type="submit" isLoading={isLoading}>
+                <Button type="submit" isLoading={isLoading || createTemplate.isPending}>
                     {task ? 'Update Task' : 'Create Task'}
                 </Button>
             </div>
         </form>
     );
 }
+

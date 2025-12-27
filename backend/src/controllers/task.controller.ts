@@ -127,4 +127,54 @@ export const taskController = {
       next(error);
     }
   },
+
+  /**
+   * POST /api/v1/tasks/bulk
+   * Bulk update tasks - allows users to update status/priority of multiple tasks
+   */
+  async bulkUpdate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { taskIds, action, data } = req.body;
+      const userId = req.user!.id;
+
+      const results = {
+        success: true,
+        processed: 0,
+        failed: 0,
+        errors: [] as Array<{ taskId: string; error: string }>,
+      };
+
+      // Map action to update data
+      const updateData: Record<string, unknown> = {};
+      if (action === 'update_status' && data?.status) {
+        updateData.status = data.status;
+      } else if (action === 'update_priority' && data?.priority) {
+        updateData.priority = data.priority;
+      }
+
+      // Process each task
+      for (const taskId of taskIds) {
+        try {
+          const { task } = await taskService.updateTask(taskId, updateData, userId);
+          if (task) {
+            results.processed++;
+            // Emit real-time update
+            const io: Server = req.app.get('io');
+            io.emit('task:updated', task);
+          }
+        } catch (error) {
+          results.failed++;
+          results.errors.push({
+            taskId,
+            error: error instanceof Error ? error.message : 'Update failed',
+          });
+        }
+      }
+
+      res.json(results);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
+

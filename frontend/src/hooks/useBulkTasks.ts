@@ -3,20 +3,10 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi } from '../lib/api';
+import { taskApi } from '../lib/api';
 import type { Status, Priority } from '../types';
 
 const TASKS_QUERY_KEY = ['tasks'];
-
-export interface BulkOperationInput {
-    action: 'assign' | 'update_status' | 'update_priority' | 'delete' | 'archive';
-    taskIds: string[];
-    data?: {
-        assigneeId?: string;
-        status?: Status;
-        priority?: Priority;
-    };
-}
 
 export interface BulkOperationResult {
     success: boolean;
@@ -33,30 +23,11 @@ export function useBulkStatusUpdate() {
 
     return useMutation({
         mutationFn: async ({ taskIds, status }: { taskIds: string[]; status: Status }): Promise<BulkOperationResult> => {
-            return adminApi.bulkTaskOperation({
+            return taskApi.bulkUpdate({
                 action: 'update_status',
                 taskIds,
                 data: { status },
-            }) as unknown as BulkOperationResult;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
-        },
-    });
-}
-
-/**
- * Hook to perform bulk delete on multiple tasks
- */
-export function useBulkDelete() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (taskIds: string[]): Promise<BulkOperationResult> => {
-            return adminApi.bulkTaskOperation({
-                action: 'delete',
-                taskIds,
-            }) as unknown as BulkOperationResult;
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
@@ -72,11 +43,11 @@ export function useBulkPriorityUpdate() {
 
     return useMutation({
         mutationFn: async ({ taskIds, priority }: { taskIds: string[]; priority: Priority }): Promise<BulkOperationResult> => {
-            return adminApi.bulkTaskOperation({
+            return taskApi.bulkUpdate({
                 action: 'update_priority',
                 taskIds,
                 data: { priority },
-            }) as unknown as BulkOperationResult;
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
@@ -85,21 +56,38 @@ export function useBulkPriorityUpdate() {
 }
 
 /**
- * Hook to perform bulk assign on multiple tasks
+ * Hook to perform bulk delete on multiple tasks
+ * Note: Deletes tasks one by one using taskApi.delete
  */
-export function useBulkAssign() {
+export function useBulkDelete() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ taskIds, assigneeId }: { taskIds: string[]; assigneeId: string }): Promise<BulkOperationResult> => {
-            return adminApi.bulkTaskOperation({
-                action: 'assign',
-                taskIds,
-                data: { assigneeId },
-            }) as unknown as BulkOperationResult;
+        mutationFn: async (taskIds: string[]): Promise<BulkOperationResult> => {
+            const results: BulkOperationResult = {
+                success: true,
+                processed: 0,
+                failed: 0,
+                errors: [],
+            };
+
+            for (const taskId of taskIds) {
+                try {
+                    await taskApi.delete(taskId);
+                    results.processed++;
+                } catch (error) {
+                    results.failed++;
+                    results.errors.push({
+                        taskId,
+                        error: error instanceof Error ? error.message : 'Delete failed',
+                    });
+                }
+            }
+            return results;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
         },
     });
 }
+
