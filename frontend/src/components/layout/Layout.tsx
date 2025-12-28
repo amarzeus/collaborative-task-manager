@@ -120,7 +120,7 @@ export function Layout() {
     }, [navigate, commandPalette]);
 
     return (
-        <div className="min-h-screen flex">
+        <div className="min-h-screen flex overflow-x-hidden">
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex flex-col w-64 bg-slate-900 border-r border-slate-800">
                 {/* Logo */}
@@ -173,7 +173,7 @@ export function Layout() {
             </aside>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
                 {/* Top header */}
                 <header className="sticky top-0 z-40 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between">
                     {/* Mobile menu button */}
@@ -204,7 +204,7 @@ export function Layout() {
 
                             {/* Enhanced Notification Panel */}
                             {notifOpen && (
-                                <div className="absolute right-0 top-12 w-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl animate-fade-in overflow-hidden">
+                                <div className="absolute right-0 top-12 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-slate-800 border border-slate-700 rounded-xl shadow-2xl animate-fade-in overflow-hidden">
                                     {/* Header */}
                                     <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
                                         <div>
@@ -350,8 +350,8 @@ export function Layout() {
 
                 {/* Mobile menu */}
                 {mobileMenuOpen && (
-                    <div className="lg:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
-                        <div className="w-64 h-full bg-slate-900 p-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="lg:hidden fixed inset-0 top-16 z-30 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
+                        <div className="w-64 h-full bg-slate-900 p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
                             <nav className="space-y-1">
                                 {navItems.map((item) => {
                                     const Icon = item.icon;
@@ -402,7 +402,7 @@ export function Layout() {
                 )}
 
                 {/* Page content */}
-                <main className="flex-1 p-4 lg:p-6 overflow-auto">
+                <main className="flex-1 p-4 lg:p-6 overflow-x-hidden">
                     <Outlet />
                 </main>
             </div>

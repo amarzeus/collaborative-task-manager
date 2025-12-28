@@ -1,10 +1,10 @@
 /**
- * Tasks page with full CRUD operations and bulk selection
+ * Tasks page with full CRUD operations, bulk selection, and Kanban view
  */
 
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, CheckSquare, Square, CheckCheck } from 'lucide-react';
+import { Plus, CheckSquare, Square, CheckCheck, LayoutGrid, List } from 'lucide-react';
 import {
     useTasks,
     useCreateTask,
@@ -17,6 +17,7 @@ import { TaskCard } from '../components/tasks/TaskCard';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { TaskFiltersBar } from '../components/tasks/TaskFilters';
 import { BulkActionsToolbar } from '../components/tasks/BulkActionsToolbar';
+import { KanbanBoard } from '../components/tasks/KanbanBoard';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { TaskListSkeleton } from '../components/ui/Skeleton';
@@ -34,7 +35,10 @@ export function TasksPage() {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-    // Selection state
+    // View mode state
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+
+    // Selection state (list view only)
     const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
     const [selectionMode, setSelectionMode] = useState(false);
 
@@ -154,7 +158,35 @@ export function TasksPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {tasks && tasks.length > 0 && (
+                    {/* View Toggle */}
+                    <div className="flex items-center bg-slate-800 rounded-lg p-1">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={clsx(
+                                "p-2 rounded-md transition-colors",
+                                viewMode === 'list'
+                                    ? "bg-indigo-600 text-white"
+                                    : "text-slate-400 hover:text-white"
+                            )}
+                            title="List view"
+                        >
+                            <List className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={clsx(
+                                "p-2 rounded-md transition-colors",
+                                viewMode === 'kanban'
+                                    ? "bg-indigo-600 text-white"
+                                    : "text-slate-400 hover:text-white"
+                            )}
+                            title="Kanban view"
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {viewMode === 'list' && tasks && tasks.length > 0 && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -176,47 +208,54 @@ export function TasksPage() {
             {/* Filters */}
             <TaskFiltersBar filters={filters} onChange={setFilters} />
 
-            {/* Task list */}
+            {/* Task list or Kanban board */}
             {isLoading ? (
                 <TaskListSkeleton count={5} />
             ) : tasks?.length ? (
-                <div className="grid gap-4">
-                    {tasks.map((task) => (
-                        <div key={task.id} className="flex items-start gap-3">
-                            {/* Selection checkbox */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleSelection(task.id);
-                                }}
-                                className={clsx(
-                                    "flex-shrink-0 mt-4 p-1 rounded transition-all",
-                                    selectedTaskIds.has(task.id)
-                                        ? "text-indigo-400"
-                                        : "text-slate-600 hover:text-slate-400"
-                                )}
-                            >
-                                {selectedTaskIds.has(task.id) ? (
-                                    <CheckSquare className="w-5 h-5" />
-                                ) : (
-                                    <Square className="w-5 h-5" />
-                                )}
-                            </button>
+                viewMode === 'kanban' ? (
+                    <KanbanBoard
+                        tasks={tasks}
+                        onStatusChange={handleStatusChange}
+                    />
+                ) : (
+                    <div className="grid gap-4">
+                        {tasks.map((task) => (
+                            <div key={task.id} className="flex items-start gap-3">
+                                {/* Selection checkbox */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleSelection(task.id);
+                                    }}
+                                    className={clsx(
+                                        "flex-shrink-0 mt-4 p-1 rounded transition-all",
+                                        selectedTaskIds.has(task.id)
+                                            ? "text-indigo-400"
+                                            : "text-slate-600 hover:text-slate-400"
+                                    )}
+                                >
+                                    {selectedTaskIds.has(task.id) ? (
+                                        <CheckSquare className="w-5 h-5" />
+                                    ) : (
+                                        <Square className="w-5 h-5" />
+                                    )}
+                                </button>
 
-                            {/* Task card */}
-                            <div className="flex-1">
-                                <TaskCard
-                                    task={task}
-                                    onEdit={openEditModal}
-                                    onDelete={openDeleteModal}
-                                    onStatusChange={handleStatusChange}
-                                    isCreator={task.creatorId === user?.id}
-                                    onClick={() => navigate(`/tasks/${task.id}`)}
-                                />
+                                {/* Task card */}
+                                <div className="flex-1">
+                                    <TaskCard
+                                        task={task}
+                                        onEdit={openEditModal}
+                                        onDelete={openDeleteModal}
+                                        onStatusChange={handleStatusChange}
+                                        isCreator={task.creatorId === user?.id}
+                                        onClick={() => navigate(`/tasks/${task.id}`)}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )
             ) : (
                 <div className="text-center py-16">
                     <div className="w-16 h-16 mx-auto mb-4 bg-slate-800 rounded-full flex items-center justify-center">
@@ -234,8 +273,8 @@ export function TasksPage() {
                 </div>
             )}
 
-            {/* Bulk Actions Toolbar */}
-            {selectedTaskIds.size > 0 && (
+            {/* Bulk Actions Toolbar (list view only) */}
+            {viewMode === 'list' && selectedTaskIds.size > 0 && (
                 <BulkActionsToolbar
                     selectedCount={selectedTaskIds.size}
                     onClearSelection={clearSelection}

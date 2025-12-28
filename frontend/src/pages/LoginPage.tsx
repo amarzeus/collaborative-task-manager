@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -24,6 +24,7 @@ export function LoginPage() {
     const navigate = useNavigate();
     const { login } = useAuth();
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const {
         register,
@@ -39,7 +40,14 @@ export function LoginPage() {
             await login(data);
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to login');
+            // Extract specific error messages from backend validation errors
+            const responseData = err.response?.data;
+            if (responseData?.errors && Array.isArray(responseData.errors)) {
+                const errorMessages = responseData.errors.map((e: { message: string }) => e.message);
+                setError(errorMessages.join('. '));
+            } else {
+                setError(responseData?.message || 'Failed to login');
+            }
         }
     };
 
@@ -83,12 +91,20 @@ export function LoginPage() {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-[13px] w-5 h-5 text-slate-500 pointer-events-none" />
                                 <Input
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     placeholder="Password"
-                                    className="pl-11"
+                                    className="pl-11 pr-11"
                                     {...register('password')}
                                     error={errors.password?.message}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-[13px] text-slate-500 hover:text-slate-300 transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
 
                             <Button

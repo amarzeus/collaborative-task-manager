@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UserPlus, Mail, Lock, User } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -29,6 +29,8 @@ export function RegisterPage() {
     const navigate = useNavigate();
     const { register: registerUser } = useAuth();
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const {
         register,
@@ -48,7 +50,15 @@ export function RegisterPage() {
             });
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to register');
+            // Extract specific error messages from backend validation errors
+            const responseData = err.response?.data;
+            if (responseData?.errors && Array.isArray(responseData.errors)) {
+                // Join all field-specific error messages
+                const errorMessages = responseData.errors.map((e: { message: string }) => e.message);
+                setError(errorMessages.join('. '));
+            } else {
+                setError(responseData?.message || 'Failed to register');
+            }
         }
     };
 
@@ -103,23 +113,42 @@ export function RegisterPage() {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-[13px] w-5 h-5 text-slate-500 pointer-events-none" />
                                 <Input
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     placeholder="Password"
-                                    className="pl-11"
+                                    className="pl-11 pr-11"
                                     {...register('password')}
                                     error={errors.password?.message}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-[13px] text-slate-500 hover:text-slate-300 transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Must be 6+ characters with uppercase letter and number
+                                </p>
                             </div>
 
                             <div className="relative">
                                 <Lock className="absolute left-3 top-[13px] w-5 h-5 text-slate-500 pointer-events-none" />
                                 <Input
-                                    type="password"
+                                    type={showConfirmPassword ? 'text' : 'password'}
                                     placeholder="Confirm password"
-                                    className="pl-11"
+                                    className="pl-11 pr-11"
                                     {...register('confirmPassword')}
                                     error={errors.confirmPassword?.message}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-[13px] text-slate-500 hover:text-slate-300 transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
 
                             <Button
