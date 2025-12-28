@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
@@ -9,6 +6,153 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+/// User model for authentication and task ownership
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
+  managerId     String?
+  role          Role           @default(USER)
+  avatarUrl     String?
+  comments      Comment[]
+  notifications Notification[]
+  taskHistory   TaskHistory[]
+  taskTemplates TaskTemplate[]
+  assignedTasks Task[]         @relation("AssignedTasks")
+  createdTasks  Task[]         @relation("CreatedTasks")
+  manager       User?          @relation("ManagerReports", fields: [managerId], references: [id])
+  directReports User[]         @relation("ManagerReports")
+
+  @@index([role])
+  @@index([isActive])
+  @@index([managerId])
+  @@map("users")
+}
+
+/// Task model with full CRUD support
+model Task {
+  id            String         @id @default(uuid())
+  title         String         @db.VarChar(100)
+  description   String
+  dueDate       DateTime
+  priority      Priority       @default(MEDIUM)
+  status        Status         @default(TODO)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  creatorId     String
+  assignedToId  String?
+  version       Int            @default(1)
+  comments      Comment[]
+  notifications Notification[]
+  history       TaskHistory[]
+  assignedTo    User?          @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  creator       User           @relation("CreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+/// In-app notifications for task assignments and updates
+model Notification {
+  id        String   @id @default(uuid())
+  message   String
+  type      String   @default("task_assigned")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  taskId    String?
+  title     String
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+/// Task history for tracking changes and generating analytics
+model TaskHistory {
+  id        String   @id @default(uuid())
+  action    String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+  taskId    String
+  userId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("task_history")
+}
+
+/// Audit log for tracking all admin and system actions
+model AuditLog {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  action     String
+  actorId    String
+  actorEmail String
+  actorIp    String?
+  userAgent  String?
+  changes    String?
+  metadata   String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Reusable task templates for quick task creation
+model TaskTemplate {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(50)
+  title       String   @db.VarChar(100)
+  description String
+  priority    Priority @default(MEDIUM)
+  isGlobal    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([isGlobal])
+  @@map("task_templates")
+}
+
+/// Task comments for collaboration
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  taskId    String
+  userId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("comments")
 }
 
 /// Priority levels for tasks
@@ -35,165 +179,3 @@ enum Role {
   ADMIN
   SUPER_ADMIN
 }
-
-/// User model for authentication and task ownership
-model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  password    String
-  name        String
-  avatarUrl   String?
-  role        Role      @default(USER)
-  isActive    Boolean   @default(true)
-  lastLoginAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Manager hierarchy
-  managerId     String?
-  manager       User?   @relation("ManagerReports", fields: [managerId], references: [id])
-  directReports User[]  @relation("ManagerReports")
-
-  // Relations
-  createdTasks  Task[] @relation("CreatedTasks")
-  assignedTasks Task[] @relation("AssignedTasks")
-  notifications Notification[]
-  taskHistory   TaskHistory[]
-  taskTemplates TaskTemplate[]
-  comments      Comment[]
-
-  @@index([role])
-  @@index([isActive])
-  @@index([managerId])
-  @@map("users")
-}
-
-/// Task model with full CRUD support
-model Task {
-  id          String   @id @default(uuid())
-  title       String   @db.VarChar(100)
-  description String
-  dueDate     DateTime
-  priority    Priority @default(MEDIUM)
-  status      Status   @default(TODO)
-  version     Int      @default(1)  // For Optimistic Concurrency Control (OCC)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  creatorId    String
-  creator      User    @relation("CreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
-  assignedToId String?
-  assignedTo   User?   @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
-  notifications Notification[]
-  history      TaskHistory[]
-  comments     Comment[]
-
-  @@index([creatorId])
-  @@index([assignedToId])
-  @@index([status])
-  @@index([priority])
-  @@index([dueDate])
-  @@map("tasks")
-}
-
-/// In-app notifications for task assignments and updates
-model Notification {
-  id        String   @id @default(uuid())
-  title     String
-  message   String
-  type      String   @default("task_assigned") // task_assigned, task_updated, task_completed, task_comment
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  // Relations
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taskId String?
-  task   Task?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  @@index([userId, read])
-  @@index([createdAt])
-  @@map("notifications")
-}
-
-/// Task history for tracking changes and generating analytics
-model TaskHistory {
-  id           String   @id @default(uuid())
-  action       String   // created, updated, status_changed, assigned, completed
-  field        String?  // Field that changed (e.g., "status", "priority", "assignedToId")
-  oldValue     String?  // Previous value (JSON string if complex)
-  newValue     String?  // New value (JSON string if complex)
-  createdAt    DateTime @default(now())
-
-  // Relations
-  taskId String
-  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-  @@index([createdAt])
-  @@index([action])
-  @@map("task_history")
-}
-
-/// Audit log for tracking all admin and system actions
-model AuditLog {
-  id           String   @id @default(uuid())
-  entityType   String   // User, Task, Team, Settings
-  entityId     String   // ID of the entity
-  action       String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, SUSPEND, ACTIVATE, ROLE_CHANGE
-  actorId      String   // User who performed the action
-  actorEmail   String   // Email for reference after user deletion
-  actorIp      String?  // IP address
-  userAgent    String?  // Browser/client info
-  changes      String?  // JSON of changes: { field: { old, new } }
-  metadata     String?  // JSON of additional context
-  createdAt    DateTime @default(now())
-
-  @@index([entityType, entityId])
-  @@index([actorId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-/// Reusable task templates for quick task creation
-model TaskTemplate {
-  id          String   @id @default(uuid())
-  name        String   @db.VarChar(50)  // Template name
-  title       String   @db.VarChar(100) // Default task title
-  description String                    // Default task description (can include subtasks)
-  priority    Priority @default(MEDIUM) // Default priority
-  isGlobal    Boolean  @default(false)  // If true, available to all users
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  creatorId String
-  creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-
-  @@index([creatorId])
-  @@index([isGlobal])
-  @@map("task_templates")
-}
-
-/// Task comments for collaboration
-model Comment {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  taskId String
-  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-  @@index([userId])
-  @@map("comments")
-}
-

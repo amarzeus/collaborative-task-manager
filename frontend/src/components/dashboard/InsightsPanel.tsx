@@ -27,47 +27,49 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
 
     const getColor = (insight: string) => {
         if (insight.toLowerCase().includes('overdue') || insight.toLowerCase().includes('consider')) {
-            return 'border-l-orange-500 bg-orange-500/5';
+            return 'border-l-orange-500 bg-orange-500/10';
         }
-        if (insight.toLowerCase().includes('impressive') || insight.toLowerCase().includes('excellent')) {
-            return 'border-l-green-500 bg-green-500/5';
+        if (insight.toLowerCase().includes('impressive') || insight.toLowerCase().includes('excellent') || insight.toLowerCase().includes('exceptional')) {
+            return 'border-l-green-500 bg-green-500/10';
         }
-        return 'border-l-indigo-500 bg-indigo-500/5';
+        return 'border-l-indigo-500 bg-indigo-500/10';
     };
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center gap-2 py-3">
-                <Lightbulb className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <h2 className="font-semibold text-white text-sm">Smart Insights</h2>
+        <Card className="shadow-lg shadow-indigo-500/5 h-full">
+            <CardHeader className="flex flex-row items-center gap-2 py-3 border-b border-white/5">
+                <div className="p-1.5 rounded-lg bg-indigo-500/10">
+                    <Lightbulb className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                </div>
+                <h2 className="font-bold text-white text-sm">Smart Insights</h2>
             </CardHeader>
-            <CardBody className="pt-0">
+            <CardBody className="py-2 overflow-y-auto max-h-[180px] custom-scrollbar">
                 <div className="space-y-2">
                     {insights.map((insight, index) => (
                         <div
                             key={index}
-                            className={`p-3 rounded-lg border-l-4 ${getColor(insight)} transition-all duration-200 hover:scale-[1.01]`}
+                            className={`p-3 rounded-lg border-l-4 ${getColor(insight)} transition-all duration-300 hover:translate-x-1 shadow-sm`}
                         >
-                            <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0">
+                            <div className="flex items-start gap-2">
+                                <div className="mt-0.5 scale-90">
                                     {getIcon(insight)}
                                 </div>
-                                <p className="text-sm text-slate-200 leading-relaxed flex-1">
+                                <p className="text-[13px] font-medium text-white leading-snug flex-1">
                                     {insight}
                                 </p>
                             </div>
                         </div>
                     ))}
+                    {insights.length === 0 && (
+                        <div className="text-center py-10 opacity-60">
+                            <Lightbulb className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+                            <p className="text-base text-slate-300 font-medium">Scanning for patterns...</p>
+                            <p className="text-sm text-slate-500 mt-2 max-w-[200px] mx-auto">
+                                Once you complete more tasks, AI observations will appear here.
+                            </p>
+                        </div>
+                    )}
                 </div>
-                {insights.length === 0 && (
-                    <div className="text-center py-8">
-                        <Lightbulb className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                        <p className="text-sm text-slate-400">No insights available yet</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                            Complete more tasks to generate insights
-                        </p>
-                    </div>
-                )}
             </CardBody>
         </Card>
     );

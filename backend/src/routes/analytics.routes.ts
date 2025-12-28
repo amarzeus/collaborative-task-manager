@@ -16,6 +16,8 @@ router.use(authenticate);
 router.get('/trends', analyticsController.getTrends);
 router.get('/priorities', analyticsController.getPriorities);
 router.get('/productivity', analyticsController.getProductivity);
+router.get('/efficiency', analyticsController.getEfficiency);
+router.get('/heatmap', analyticsController.getHeatmap);
 router.get('/insights', analyticsController.getInsights);
 router.get('/dashboard', analyticsController.getDashboardData);
 

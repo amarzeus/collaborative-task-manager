@@ -84,7 +84,7 @@ export function TrendChart({ data }: Omit<TrendChartProps, 'title'>) {
             </div>
 
             {/* Legend - compact inline */}
-            <div className="flex items-center justify-center gap-4 pt-2">
+            <div className="flex items-center justify-center gap-4 pt-1">
                 <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
                     <span className="text-[10px] text-slate-400">Completed</span>

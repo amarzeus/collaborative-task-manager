@@ -114,21 +114,67 @@ export const taskRepository = {
    * Create a new task
    */
   async create(data: CreateTaskData) {
-    return prisma.task.create({
+    const task = await prisma.task.create({
       data,
       select: taskSelect,
     });
+
+    // Record creation history
+    await prisma.taskHistory.create({
+      data: {
+        taskId: task.id,
+        userId: data.creatorId,
+        action: 'created',
+      },
+    });
+
+    return task;
   },
 
   /**
    * Update a task
    */
-  async update(id: string, data: UpdateTaskData) {
-    return prisma.task.update({
+  async update(id: string, data: UpdateTaskData, userId: string) {
+    const existingTask = await prisma.task.findUnique({
+      where: { id },
+      select: { status: true, priority: true, assignedToId: true },
+    });
+
+    const task = await prisma.task.update({
       where: { id },
       data,
       select: taskSelect,
     });
+
+    // Record history for status changes
+    if (data.status && data.status !== existingTask?.status) {
+      await prisma.taskHistory.create({
+        data: {
+          taskId: id,
+          userId,
+          action: 'status_changed',
+          field: 'status',
+          oldValue: existingTask?.status,
+          newValue: data.status,
+        },
+      });
+    }
+
+    // Record history for assignments
+    if (data.assignedToId !== undefined && data.assignedToId !== existingTask?.assignedToId) {
+      await prisma.taskHistory.create({
+        data: {
+          taskId: id,
+          userId,
+          action: 'assigned',
+          field: 'assignedToId',
+          oldValue: existingTask?.assignedToId,
+          newValue: data.assignedToId,
+        },
+      });
+    }
+
+    return task;
   },
 
   /**

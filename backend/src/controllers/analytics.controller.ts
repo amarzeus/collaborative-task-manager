@@ -1,26 +1,30 @@
-/**
- * Analytics Controller
- * HTTP endpoints for analytics data
- */
-
 import { Response, NextFunction } from 'express';
-import { analyticsService } from '../services/analytics.service.js';
+import { analyticsService, AnalyticsScope } from '../services/analytics.service.js';
 import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import { AppError } from '../lib/errors.js';
 
 export const analyticsController = {
   /**
+   * Helper to validate and get scope
+   */
+  getScope(req: AuthenticatedRequest): AnalyticsScope {
+    const scope = (req.query.scope as AnalyticsScope) || 'personal';
+    if (scope === 'global' && req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
+      throw AppError.forbidden('Only admins can access global analytics');
+    }
+    return scope;
+  },
+
+  /**
    * GET /api/v1/analytics/trends
-   * Get completion trends for the last N days
    */
   async getTrends(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const scope = analyticsController.getScope(req);
       const days = parseInt(req.query.days as string) || 7;
-      const trends = await analyticsService.getCompletionTrends(req.user!.id, days);
+      const trends = await analyticsService.getCompletionTrends(req.user!.id, days, scope);
 
-      res.json({
-        success: true,
-        data: trends,
-      });
+      res.json({ success: true, data: trends });
     } catch (error) {
       next(error);
     }
@@ -28,16 +32,12 @@ export const analyticsController = {
 
   /**
    * GET /api/v1/analytics/priorities
-   * Get priority distribution
    */
   async getPriorities(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const distribution = await analyticsService.getPriorityDistribution(req.user!.id);
-
-      res.json({
-        success: true,
-        data: distribution,
-      });
+      const scope = analyticsController.getScope(req);
+      const distribution = await analyticsService.getPriorityDistribution(req.user!.id, scope);
+      res.json({ success: true, data: distribution });
     } catch (error) {
       next(error);
     }
@@ -45,16 +45,39 @@ export const analyticsController = {
 
   /**
    * GET /api/v1/analytics/productivity
-   * Get productivity metrics
    */
   async getProductivity(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const metrics = await analyticsService.getProductivityMetrics(req.user!.id);
+      const scope = analyticsController.getScope(req);
+      const days = parseInt(req.query.days as string) || 7;
+      const metrics = await analyticsService.getProductivityMetrics(req.user!.id, scope, days);
+      res.json({ success: true, data: metrics });
+    } catch (error) {
+      next(error);
+    }
+  },
 
-      res.json({
-        success: true,
-        data: metrics,
-      });
+  /**
+   * GET /api/v1/analytics/efficiency
+   */
+  async getEfficiency(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const scope = analyticsController.getScope(req);
+      const metrics = await analyticsService.getEfficiencyMetrics(req.user!.id, scope);
+      res.json({ success: true, data: metrics });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/v1/analytics/heatmap
+   */
+  async getHeatmap(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const scope = analyticsController.getScope(req);
+      const data = await analyticsService.getActivityHeatmap(req.user!.id, scope);
+      res.json({ success: true, data });
     } catch (error) {
       next(error);
     }
@@ -62,16 +85,13 @@ export const analyticsController = {
 
   /**
    * GET /api/v1/analytics/insights
-   * Get smart insights
    */
   async getInsights(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const insights = await analyticsService.getInsights(req.user!.id);
-
-      res.json({
-        success: true,
-        data: insights,
-      });
+      const scope = analyticsController.getScope(req);
+      const days = parseInt(req.query.days as string) || 7;
+      const insights = await analyticsService.getInsights(req.user!.id, scope, days);
+      res.json({ success: true, data: insights });
     } catch (error) {
       next(error);
     }
@@ -79,15 +99,19 @@ export const analyticsController = {
 
   /**
    * GET /api/v1/analytics/dashboard
-   * Get all analytics data for dashboard
    */
   async getDashboardData(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const [trends, priorities, productivity, insights] = await Promise.all([
-        analyticsService.getCompletionTrends(req.user!.id, 7),
-        analyticsService.getPriorityDistribution(req.user!.id),
-        analyticsService.getProductivityMetrics(req.user!.id),
-        analyticsService.getInsights(req.user!.id),
+      const scope = analyticsController.getScope(req);
+      const days = parseInt(req.query.days as string) || 7;
+
+      const [trends, priorities, productivity, insights, efficiency, heatmap] = await Promise.all([
+        analyticsService.getCompletionTrends(req.user!.id, days, scope),
+        analyticsService.getPriorityDistribution(req.user!.id, scope),
+        analyticsService.getProductivityMetrics(req.user!.id, scope, days),
+        analyticsService.getInsights(req.user!.id, scope, days),
+        analyticsService.getEfficiencyMetrics(req.user!.id, scope),
+        analyticsService.getActivityHeatmap(req.user!.id, scope),
       ]);
 
       res.json({
@@ -97,6 +121,8 @@ export const analyticsController = {
           priorities,
           productivity,
           insights,
+          efficiency,
+          heatmap,
         },
       });
     } catch (error) {
@@ -104,3 +130,4 @@ export const analyticsController = {
     }
   },
 };
+

@@ -18,6 +18,7 @@ import {
     Check,
     ExternalLink,
     Shield,
+    BarChart3,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
@@ -28,6 +29,7 @@ import { CommandPalette, useCommandPalette } from '../ui/CommandPalette';
 const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/tasks', label: 'Tasks', icon: ListTodo },
+    { path: '/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/profile', label: 'Profile', icon: User },
 ];
 

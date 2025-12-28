@@ -131,7 +131,7 @@ export const taskService = {
     if (data.status) updateData.status = data.status as Status;
     if (data.assignedToId !== undefined) updateData.assignedToId = data.assignedToId;
 
-    const task = await taskRepository.update(id, updateData);
+    const task = await taskRepository.update(id, updateData, userId);
 
     // Create notification if assignee changed
     let sendNotificationTo: string | undefined;

@@ -6,72 +6,63 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { analyticsApi, DashboardAnalytics } from '../lib/analytics-api';
+import { analyticsApi, DashboardAnalytics, AnalyticsScope } from '../lib/analytics-api';
 import { socketClient } from '../lib/socket';
 
-const ANALYTICS_KEY = ['analytics', 'dashboard'];
+const ANALYTICS_KEY = 'analytics';
 
-// Fallback data when analytics API is unavailable
+// Fallback data
 const FALLBACK_ANALYTICS: DashboardAnalytics = {
-    trends: [
-        { date: 'Mon', completed: 0, created: 0 },
-        { date: 'Tue', completed: 0, created: 0 },
-        { date: 'Wed', completed: 0, created: 0 },
-        { date: 'Thu', completed: 0, created: 0 },
-        { date: 'Fri', completed: 0, created: 0 },
-        { date: 'Sat', completed: 0, created: 0 },
-        { date: 'Sun', completed: 0, created: 0 },
-    ],
+    trends: [],
     priorities: { low: 0, medium: 0, high: 0, urgent: 0 },
     productivity: { completedThisWeek: 0, avgCompletionDays: 0, totalCompleted: 0 },
     insights: [],
+    efficiency: [
+        { status: 'TODO', avgDays: 0 },
+        { status: 'IN_PROGRESS', avgDays: 0 },
+        { status: 'REVIEW', avgDays: 0 },
+    ],
+    heatmap: [],
 };
-
-// Safe fetch function that returns fallback on error
-async function safeFetchAnalytics(): Promise<DashboardAnalytics> {
-    try {
-        return await analyticsApi.getDashboardData();
-    } catch (error) {
-        console.warn('Analytics API unavailable, using fallback data');
-        return FALLBACK_ANALYTICS;
-    }
-}
 
 /**
  * Hook to fetch dashboard analytics
- * Gracefully handles API failures with fallback data
- * Syncs in real-time via Socket.io task events
  */
-export function useAnalytics() {
+export function useAnalytics(scope: AnalyticsScope = 'personal', days: number = 7) {
     const queryClient = useQueryClient();
 
     const query = useQuery({
-        queryKey: ANALYTICS_KEY,
-        queryFn: safeFetchAnalytics,
-        staleTime: 10000, // 10 seconds - more responsive
-        refetchInterval: 30000, // Refetch every 30 seconds for real-time feel
-        retry: false, // Don't retry - use fallback immediately
+        queryKey: [ANALYTICS_KEY, 'dashboard', scope, days],
+        queryFn: async () => {
+            try {
+                return await analyticsApi.getDashboardData(scope, days);
+            } catch (error) {
+                console.warn('Analytics API error:', error);
+                return FALLBACK_ANALYTICS;
+            }
+        },
+        staleTime: 10000,
+        refetchInterval: 60000, // slower refresh for deep analytics
+        retry: false,
     });
 
-    // Real-time sync: invalidate analytics when tasks change
+    // Real-time sync
     useEffect(() => {
-        const handleTaskChange = () => {
-            // Invalidate to trigger refetch
-            queryClient.invalidateQueries({ queryKey: ANALYTICS_KEY });
+        const handleRefresh = () => {
+            queryClient.invalidateQueries({ queryKey: [ANALYTICS_KEY] });
         };
 
-        socketClient.onTaskCreated(handleTaskChange);
-        socketClient.onTaskUpdated(handleTaskChange);
-        socketClient.onTaskDeleted(handleTaskChange);
+        socketClient.onTaskCreated(handleRefresh);
+        socketClient.onTaskUpdated(handleRefresh);
+        socketClient.onTaskDeleted(handleRefresh);
 
         return () => {
-            socketClient.offTaskCreated(handleTaskChange);
-            socketClient.offTaskUpdated(handleTaskChange);
-            socketClient.offTaskDeleted(handleTaskChange);
+            socketClient.offTaskCreated(handleRefresh);
+            socketClient.offTaskUpdated(handleRefresh);
+            socketClient.offTaskDeleted(handleRefresh);
         };
     }, [queryClient]);
 
-    // Always return data (either real or fallback)
     return {
         ...query,
         data: query.data ?? FALLBACK_ANALYTICS,

@@ -12,12 +12,14 @@ import { ChevronDown, ExternalLink } from 'lucide-react';
 
 interface MiniStatsCardProps {
     title: string;
-    value: number;
+    value: number | string;
     icon: LucideIcon;
     color: 'indigo' | 'blue' | 'green' | 'red' | 'orange' | 'purple';
     trend?: number;
     sparklineData?: number[];
     subtitle?: string;
+    isActive?: boolean;
+    onClick?: () => void;
     detailData?: {
         items: Array<{ label: string; value: string | number; trend?: number }>;
         chartData?: Array<{ name: string; value: number }>;
@@ -86,6 +88,8 @@ export function MiniStatsCard({
     sparklineData,
     subtitle,
     detailData,
+    isActive,
+    onClick,
 }: MiniStatsCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -96,6 +100,14 @@ export function MiniStatsCard({
         if (!sparklineData) return null;
         return sparklineData.map((v, i) => ({ value: v, index: i }));
     }, [sparklineData]);
+
+    const handleCardClick = () => {
+        if (onClick) {
+            onClick();
+        } else {
+            setIsExpanded(!isExpanded);
+        }
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -114,33 +126,36 @@ export function MiniStatsCard({
         <div ref={cardRef} className="relative">
             {/* Main Card */}
             <div
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={handleCardClick}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 className={`
                     relative overflow-hidden rounded-lg cursor-pointer
-                    bg-slate-800/80 backdrop-blur-sm border ${config.border}
+                    bg-slate-800/80 backdrop-blur-sm border 
                     transition-all duration-300 ease-out
-                    ${isHovered ? 'shadow-lg scale-[1.02]' : ''}
+                    ${isActive ? `ring-2 ring-offset-2 ring-offset-slate-900 ring-${color}-500 shadow-lg shadow-${color}-500/20` : ''}
+                    ${isActive ? `border-${color}-500/50` : config.border}
+                    ${isHovered ? 'shadow-md scale-[1.01]' : ''}
                     ${isExpanded ? 'ring-2 ring-indigo-500/50' : ''}
                 `}
             >
+
                 {/* Mini View (Always visible) */}
-                <div className={`p-3 transition-all duration-300 ${isHovered ? 'pb-2' : ''}`}>
+                <div className={`p-2 transition-all duration-300 ${isHovered ? 'pb-1' : ''}`}>
                     <div className="flex items-start gap-2">
-                        <div className={`p-1.5 rounded-md ${config.icon} flex-shrink-0`}>
-                            <Icon className={`w-3.5 h-3.5 ${config.text}`} />
+                        <div className={`p-1 rounded-md ${config.icon} flex-shrink-0`}>
+                            <Icon className={`w-3 h-3 ${config.text}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-lg font-bold text-white tabular-nums leading-none truncate">
-                                {value.toLocaleString()}
+                            <p className="text-base font-bold text-white tabular-nums leading-none truncate">
+                                {typeof value === 'number' ? value.toLocaleString() : value}
                             </p>
-                            <div className="flex items-center gap-1.5 mt-1">
-                                <p className={`text-[10px] ${config.text} font-medium truncate`}>
+                            <div className="flex items-center gap-1 mt-0.5">
+                                <p className={`text-[9px] ${config.text} font-medium truncate uppercase tracking-wider`}>
                                     {title}
                                 </p>
                                 {trend !== undefined && (
-                                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded flex-shrink-0 ${trend >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                    <span className={`text-[8px] font-medium px-1 py-0 rounded flex-shrink-0 ${trend >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
                                         {trend >= 0 ? '▲' : '▼'}{Math.abs(trend)}%
                                     </span>
                                 )}
@@ -199,7 +214,9 @@ export function MiniStatsCard({
                                 <Icon className={`w-5 h-5 ${config.text}`} />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-white">
+                                    {typeof value === 'number' ? value.toLocaleString() : value}
+                                </p>
                                 <p className={`text-sm ${config.text}`}>{title}</p>
                             </div>
                         </div>

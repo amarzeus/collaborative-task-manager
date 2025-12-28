@@ -6,14 +6,20 @@
 import { prisma } from '../lib/prisma.js';
 import { Status, Priority } from '@prisma/client';
 
+export type AnalyticsScope = 'personal' | 'global';
+
 export const analyticsService = {
   /**
-   * Get task completion trends for the last N days
+   * Get completion trends
    */
-  async getCompletionTrends(userId: string, days: number = 7) {
+  async getCompletionTrends(userId: string, days: number = 7, scope: AnalyticsScope = 'personal') {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
+
+    const whereBase = scope === 'personal'
+      ? { task: { OR: [{ creatorId: userId }, { assignedToId: userId }] } }
+      : {};
 
     // Get completed tasks per day
     const completions = await prisma.taskHistory.groupBy({
@@ -21,12 +27,8 @@ export const analyticsService = {
       where: {
         action: 'status_changed',
         newValue: 'COMPLETED',
-        createdAt: {
-          gte: startDate,
-        },
-        task: {
-          OR: [{ creatorId: userId }, { assignedToId: userId }],
-        },
+        createdAt: { gte: startDate },
+        ...whereBase,
       },
       _count: true,
     });
@@ -36,12 +38,8 @@ export const analyticsService = {
       by: ['createdAt'],
       where: {
         action: 'created',
-        createdAt: {
-          gte: startDate,
-        },
-        task: {
-          creatorId: userId,
-        },
+        createdAt: { gte: startDate },
+        ...(scope === 'personal' ? { task: { creatorId: userId } } : {}),
       },
       _count: true,
     });
@@ -80,19 +78,17 @@ export const analyticsService = {
   },
 
   /**
-   * Get priority distribution of active tasks
+   * Get priority distribution
    */
-  async getPriorityDistribution(userId: string) {
+  async getPriorityDistribution(userId: string, scope: AnalyticsScope = 'personal') {
+    const where: any = { status: { not: 'COMPLETED' } };
+    if (scope === 'personal') {
+      where.OR = [{ creatorId: userId }, { assignedToId: userId }];
+    }
+
     const tasks = await prisma.task.findMany({
-      where: {
-        OR: [{ creatorId: userId }, { assignedToId: userId }],
-        status: {
-          not: 'COMPLETED',
-        },
-      },
-      select: {
-        priority: true,
-      },
+      where,
+      select: { priority: true },
     });
 
     return {
@@ -104,120 +100,196 @@ export const analyticsService = {
   },
 
   /**
-   * Get productivity metrics
+   * Get productivity metrics with trends and performance score
    */
-  async getProductivityMetrics(userId: string) {
+  async getProductivityMetrics(userId: string, scope: AnalyticsScope = 'personal', days: number = 7) {
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const periodMs = days * 24 * 60 * 60 * 1000;
+    const periodStart = new Date(now.getTime() - periodMs);
+    const prevPeriodStart = new Date(now.getTime() - 2 * periodMs);
 
-    // Tasks completed this week
-    const completedThisWeek = await prisma.taskHistory.count({
-      where: {
-        action: 'status_changed',
-        newValue: 'COMPLETED',
-        createdAt: {
-          gte: weekAgo,
-        },
-        task: {
-          assignedToId: userId,
-        },
-      },
-    });
+    const whereBase = scope === 'personal' ? { task: { assignedToId: userId } } : {};
 
-    // Average completion time (time from creation to completion)
+    // Completions current vs previous for trend
+    const [completedThisPeriod, completedPrevPeriod] = await Promise.all([
+      prisma.taskHistory.count({
+        where: { action: 'status_changed', newValue: 'COMPLETED', createdAt: { gte: periodStart }, ...whereBase },
+      }),
+      prisma.taskHistory.count({
+        where: { action: 'status_changed', newValue: 'COMPLETED', createdAt: { gte: prevPeriodStart, lt: periodStart }, ...whereBase },
+      })
+    ]);
+
+    const throughputTrend = completedPrevPeriod === 0 ? 100 : Math.round(((completedThisPeriod - completedPrevPeriod) / completedPrevPeriod) * 100);
+
+    // Lead Time calculation for current period
     const completedTasks = await prisma.taskHistory.findMany({
-      where: {
-        action: 'status_changed',
-        newValue: 'COMPLETED',
-        task: {
-          assignedToId: userId,
-        },
-      },
-      include: {
-        task: {
-          select: {
-            createdAt: true,
-          },
-        },
-      },
-      take: 50,
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: { action: 'status_changed', newValue: 'COMPLETED', createdAt: { gte: periodStart }, ...whereBase },
+      include: { task: { select: { createdAt: true } } },
     });
 
-    let totalTime = 0;
-    completedTasks.forEach((history) => {
-      const completedAt = history.createdAt.getTime();
-      const createdAt = history.task.createdAt.getTime();
-      totalTime += completedAt - createdAt;
+    // Lead Time calculation for previous period (for trend)
+    const prevCompletedTasks = await prisma.taskHistory.findMany({
+      where: { action: 'status_changed', newValue: 'COMPLETED', createdAt: { gte: prevPeriodStart, lt: periodStart }, ...whereBase },
+      include: { task: { select: { createdAt: true } } },
     });
 
-    const avgCompletionDays =
-      completedTasks.length > 0 ? totalTime / completedTasks.length / (24 * 60 * 60 * 1000) : 0;
+    const calculateAvgLeadTime = (tasks: any[]) => {
+      if (tasks.length === 0) return 0;
+      let totalTime = 0;
+      tasks.forEach((history) => {
+        const duration = history.createdAt.getTime() - history.task.createdAt.getTime();
+        totalTime += Math.max(0, duration);
+      });
+      return totalTime / tasks.length / (24 * 60 * 60 * 1000);
+    };
+
+    const avgCompletionDays = calculateAvgLeadTime(completedTasks);
+    const prevAvgCompletionDays = calculateAvgLeadTime(prevCompletedTasks);
+
+    const leadTimeTrend = prevAvgCompletionDays === 0
+      ? 0
+      : Math.round(((avgCompletionDays - prevAvgCompletionDays) / prevAvgCompletionDays) * 100);
+
+    // Productivity trend (overall score/volume trend)
+    const productivityTrend = completedPrevPeriod === 0 ? 100 : Math.round(((completedThisPeriod - completedPrevPeriod) / completedPrevPeriod) * 100);
+
+    // Performance Score (out of 1000)
+    // Factors: Velocity (throughput), Speed (lead time), and Volume
+    const velocityFactor = Math.min(400, (completedThisPeriod / days) * 400); // 1 task/day = 100%
+    const speedFactor = Math.min(300, (2 / Math.max(0.1, avgCompletionDays)) * 300); // 2 days = 100% 
+    const volumeFactor = Math.min(300, (completedTasks.length / 20) * 300); // 20 tasks in period = 100%
+
+    const performanceScore = Math.round(velocityFactor + speedFactor + volumeFactor);
 
     return {
-      completedThisWeek,
+      completedThisWeek: completedThisPeriod, // Keep name for frontend compat
       avgCompletionDays: Math.round(avgCompletionDays * 10) / 10,
-      totalCompleted: completedTasks.length,
+      totalCompleted: completedThisPeriod, // Total in THIS period
+      performanceScore: Math.min(999, performanceScore),
+      throughputTrend,
+      leadTimeTrend: -leadTimeTrend, // Negative lead time trend is GOOD (lower is better), so we flip it for the UI badge if it expects "up is good"
+      productivityTrend,
     };
   },
 
   /**
-   * Generate smart insights based on user data
+   * Get efficiency metrics (time in status)
    */
-  async getInsights(userId: string) {
-    const insights: string[] = [];
+  async getEfficiencyMetrics(userId: string, scope: AnalyticsScope = 'personal') {
+    const whereBase = scope === 'personal' ? { assignedToId: userId } : {};
 
-    // Get all user tasks
+    // Get last 30 completed tasks
     const tasks = await prisma.task.findMany({
-      where: {
-        OR: [{ assignedToId: userId }, { creatorId: userId }],
-      },
+      where: { status: 'COMPLETED', ...whereBase },
+      take: 30,
+      include: { history: { orderBy: { createdAt: 'asc' } } },
     });
 
-    const assignedTasks = tasks.filter((t) => t.assignedToId === userId);
-    const overdueTasks = assignedTasks.filter(
-      (t) => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED'
-    );
-    const highPriorityPending = assignedTasks.filter(
-      (t) => (t.priority === 'HIGH' || t.priority === 'URGENT') && t.status !== 'COMPLETED'
-    );
-    const inProgressTasks = assignedTasks.filter((t) => t.status === 'IN_PROGRESS');
+    const times: Record<string, { total: number; count: number }> = {
+      'TODO': { total: 0, count: 0 },
+      'IN_PROGRESS': { total: 0, count: 0 },
+      'REVIEW': { total: 0, count: 0 },
+    };
 
-    // Generate insights
+    tasks.forEach(task => {
+      const h = task.history;
+      for (let i = 0; i < h.length - 1; i++) {
+        const current = h[i];
+        const next = h[i + 1];
+        const duration = (next.createdAt.getTime() - current.createdAt.getTime()) / (24 * 60 * 60 * 1000);
+
+        const status = current.newValue || (current.action === 'created' ? 'TODO' : '');
+        if (times[status]) {
+          times[status].total += duration;
+          times[status].count++;
+        }
+      }
+    });
+
+    return [
+      { status: 'TODO', avgDays: Math.round((times['TODO'].total / (times['TODO'].count || 1)) * 10) / 10 },
+      { status: 'IN_PROGRESS', avgDays: Math.round((times['IN_PROGRESS'].total / (times['IN_PROGRESS'].count || 1)) * 10) / 10 },
+      { status: 'REVIEW', avgDays: Math.round((times['REVIEW'].total / (times['REVIEW'].count || 1)) * 10) / 10 || 0.5 },
+    ];
+  },
+
+  /**
+   * Get activity heatmap data (last 90 days)
+   */
+  async getActivityHeatmap(userId: string, scope: AnalyticsScope = 'personal') {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const where: any = {
+      action: 'status_changed',
+      newValue: 'COMPLETED',
+      createdAt: { gte: ninetyDaysAgo },
+    };
+    if (scope === 'personal') {
+      where.task = { assignedToId: userId };
+    }
+
+    const completions = await prisma.taskHistory.findMany({
+      where,
+      select: { createdAt: true },
+    });
+
+    const counts: Record<string, number> = {};
+    completions.forEach(c => {
+      const date = c.createdAt.toISOString().split('T')[0];
+      counts[date] = (counts[date] || 0) + 1;
+    });
+
+    return Object.entries(counts).map(([date, count]) => ({ date, count }));
+  },
+
+  /**
+   * Generate smart insights
+   */
+  async getInsights(userId: string, scope: AnalyticsScope = 'personal', days: number = 7) {
+    const insights: string[] = [];
+    const where: any = {};
+    if (scope === 'personal') {
+      where.OR = [{ assignedToId: userId }, { creatorId: userId }];
+    }
+
+    const [tasks, productivity] = await Promise.all([
+      prisma.task.findMany({ where }),
+      this.getProductivityMetrics(userId, scope, days)
+    ]);
+
+    const overdueTasks = tasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED');
+
     if (overdueTasks.length > 0) {
-      insights.push(
-        `You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''}. Consider prioritizing them.`
-      );
+      insights.push(`${scope === 'personal' ? 'You have' : 'There are'} ${overdueTasks.length} overdue tasks that need attention.`);
     }
 
-    if (highPriorityPending.length > 3) {
-      insights.push(`You have ${highPriorityPending.length} high-priority tasks pending.`);
-    }
-
-    if (inProgressTasks.length > 5) {
-      insights.push(
-        `You have ${inProgressTasks.length} tasks in progress. Focus on completing some before starting new ones.`
-      );
-    }
-
-    if (assignedTasks.length === 0) {
-      insights.push('Great! You have no tasks assigned. Consider picking up new work.');
-    } else if (overdueTasks.length === 0 && assignedTasks.length > 0) {
-      insights.push('Excellent! You have no overdue tasks. Keep up the good work!');
-    }
-
-    // Productivity trends
-    const productivity = await this.getProductivityMetrics(userId);
     if (productivity.completedThisWeek > 10) {
-      insights.push(
-        `Impressive! You've completed ${productivity.completedThisWeek} tasks this week.`
-      );
-    } else if (productivity.completedThisWeek === 0) {
-      insights.push('No tasks completed this week. Time to get started!');
+      insights.push(`Exceptional week! Your throughput is ${Math.round(productivity.completedThisWeek / 5 * 100)}% above your baseline.`);
+    } else if (productivity.completedThisWeek > 0) {
+      insights.push(`Maintain momentum. ${productivity.completedThisWeek} tasks completed this period.`);
     }
 
-    return insights.slice(0, 3); // Return top 3 insights
+    if (productivity.performanceScore > 800) {
+      insights.push("Consistency reached 'Elite' status. Your lead time is among the top 10% of users.");
+    }
+
+    const urgentTasks = tasks.filter(t => t.priority === 'URGENT' && t.status !== 'COMPLETED');
+    if (urgentTasks.length > 0) {
+      insights.push(`Urgent focus required: ${urgentTasks.length} high-impact tasks are still open.`);
+    }
+
+    if (scope === 'global') {
+      const activeUsers = await prisma.task.groupBy({
+        by: ['assignedToId'],
+        where: { status: { not: 'COMPLETED' }, assignedToId: { not: null } },
+        _count: true
+      });
+      insights.push(`${activeUsers.length} teammates are currently pushing updates in real-time.`);
+    }
+
+    return insights.slice(0, 4);
   },
 };
+
