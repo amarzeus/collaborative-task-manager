@@ -100,6 +100,30 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
+// Comment types
+export interface Comment {
+    id: string;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
+    taskId: string;
+    userId: string;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+    };
+}
+
+export interface CreateCommentInput {
+    content: string;
+    taskId: string;
+}
+
+export interface UpdateCommentInput {
+    content: string;
+}
+
 export interface ApiError {
     success: false;
     message: string;

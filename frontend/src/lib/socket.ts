@@ -3,7 +3,7 @@
  */
 
 import { io, Socket } from 'socket.io-client';
-import type { Task, Notification } from '../types';
+import type { Task, Notification, Comment } from '../types';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 
@@ -98,5 +98,32 @@ export const socketClient = {
 
     offNotification(callback?: (notification: Partial<Notification>) => void): void {
         socket?.off('notification:new', callback);
+    },
+
+    /**
+     * Subscribe to comment events
+     */
+    onCommentCreated(callback: (comment: Comment) => void): void {
+        socket?.on('comment:created', callback);
+    },
+
+    onCommentUpdated(callback: (comment: Comment) => void): void {
+        socket?.on('comment:updated', callback);
+    },
+
+    onCommentDeleted(callback: (data: { id: string, taskId: string }) => void): void {
+        socket?.on('comment:deleted', callback);
+    },
+
+    offCommentCreated(callback?: (comment: Comment) => void): void {
+        socket?.off('comment:created', callback);
+    },
+
+    offCommentUpdated(callback?: (comment: Comment) => void): void {
+        socket?.off('comment:updated', callback);
+    },
+
+    offCommentDeleted(callback?: (data: { id: string, taskId: string }) => void): void {
+        socket?.off('comment:deleted', callback);
     },
 };

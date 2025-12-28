@@ -17,6 +17,7 @@ import { notificationRouter } from './routes/notification.routes.js';
 import analyticsRouter from './routes/analytics.routes.js';
 import adminRouter from './routes/admin.routes.js';
 import templateRouter from './routes/template.routes.js';
+import { commentRouter } from './routes/comment.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { setupSocketHandlers } from './socket/index.js';
 
@@ -56,6 +57,7 @@ app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/templates', templateRouter);
+app.use('/api/v1/comments', commentRouter);
 
 // Root route
 app.get('/', (_req, res) => {

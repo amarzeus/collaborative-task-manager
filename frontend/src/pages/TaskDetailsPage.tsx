@@ -21,6 +21,7 @@ import { Modal } from '../components/ui/Modal';
 import { TaskForm } from '../components/tasks/TaskForm';
 import { SubtaskList } from '../components/tasks/SubtaskList';
 import { TaskCharts } from '../components/tasks/TaskCharts';
+import { CommentList } from '../components/tasks/CommentList';
 import type { Priority, Status, UpdateTaskInput } from '../types';
 
 const priorityConfig: Record<Priority, { label: string; color: string; bg: string }> = {
@@ -210,7 +211,10 @@ export function TaskDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Additional Metadata Card (optional, or comments in future) */}
+                    {/* Comments Section */}
+                    <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl p-6 shadow-xl">
+                        <CommentList taskId={task.id} />
+                    </div>
                 </div>
 
                 {/* Right Column: Sidebar Meta */}
@@ -330,7 +334,7 @@ export function TaskDetailsPage() {
                     </Button>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 }
 

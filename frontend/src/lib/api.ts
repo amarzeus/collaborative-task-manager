@@ -14,6 +14,9 @@ import type {
     UpdateTaskInput,
     TaskFilters,
     Notification,
+    Comment,
+    CreateCommentInput,
+    UpdateCommentInput,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -199,6 +202,32 @@ export const notificationApi = {
 
     markAllAsRead: async (): Promise<void> => {
         await api.put('/notifications/read-all');
+    },
+
+    dismissAll: async (): Promise<void> => {
+        await api.delete('/notifications');
+    },
+};
+
+// Comment API
+export const commentApi = {
+    getByTaskId: async (taskId: string): Promise<Comment[]> => {
+        const response = await api.get<ApiResponse<Comment[]>>(`/tasks/${taskId}/comments`);
+        return response.data.data;
+    },
+
+    create: async (data: CreateCommentInput): Promise<Comment> => {
+        const response = await api.post<ApiResponse<Comment>>('/comments', data);
+        return response.data.data;
+    },
+
+    update: async (id: string, data: UpdateCommentInput): Promise<Comment> => {
+        const response = await api.put<ApiResponse<Comment>>(`/comments/${id}`, data);
+        return response.data.data;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/comments/${id}`);
     },
 };
 
