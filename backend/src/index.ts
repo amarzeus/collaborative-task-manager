@@ -18,8 +18,14 @@ import analyticsRouter from './routes/analytics.routes.js';
 import adminRouter from './routes/admin.routes.js';
 import templateRouter from './routes/template.routes.js';
 import { commentRouter } from './routes/comment.routes.js';
+import uploadRouter from './routes/upload.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { setupSocketHandlers } from './socket/index.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -49,6 +55,9 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// Serve static files (avatars)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/tasks', taskRouter);
@@ -58,6 +67,7 @@ app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/templates', templateRouter);
 app.use('/api/v1/comments', commentRouter);
+app.use('/api/v1/upload', uploadRouter);
 
 // Root route
 app.get('/', (_req, res) => {

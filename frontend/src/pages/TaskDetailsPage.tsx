@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, isPast } from 'date-fns';
 import {
@@ -23,6 +23,10 @@ import { SubtaskList } from '../components/tasks/SubtaskList';
 import { TaskCharts } from '../components/tasks/TaskCharts';
 import { CommentList } from '../components/tasks/CommentList';
 import type { Priority, Status, UpdateTaskInput } from '../types';
+import { useUndo } from '../hooks/useUndo';
+import { useToast } from '../providers/ToastProvider';
+import { socketClient } from '../lib/socket';
+import { useQueryClient } from '@tanstack/react-query';
 
 const priorityConfig: Record<Priority, { label: string; color: string; bg: string }> = {
     LOW: { label: 'Low', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/30' },
@@ -47,10 +51,26 @@ export function TaskDetailsPage() {
     const { data: task, isLoading, isError } = useTask(taskId || '');
     const updateTask = useUpdateTask();
     const deleteTask = useDeleteTask();
+    const queryClient = useQueryClient();
+    const { showToast } = useToast();
 
     // Local State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [deleteConfirm, setDeleteConfirm] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const { showUndo } = useToast();
+
+    // Undo functionality for task deletion
+    const { scheduleCommit } = useUndo<{ taskId: string; taskTitle: string }>({
+        timeout: 5000,
+        onCommit: async ({ taskId }) => {
+            try {
+                await deleteTask.mutateAsync(taskId);
+                console.log('✅ Task permanently deleted:', taskId);
+            } catch (err) {
+                console.error('Failed to delete task:', err);
+            }
+        },
+    });
 
     // Calculate subtask stats (moved up to avoid hook order error)
     const subtaskStats = useMemo(() => {
@@ -67,16 +87,78 @@ export function TaskDetailsPage() {
         setIsEditModalOpen(false);
     };
 
-    const handleDelete = async () => {
-        if (!taskId) return;
-        await deleteTask.mutateAsync(taskId);
+    const handleDelete = () => {
+        if (!taskId || !task) return;
+
+        // Close modal immediately
+        setIsDeleteModalOpen(false);
+
+        // Navigate back to tasks page
         navigate('/tasks');
+
+        // Show undo toast
+        showUndo(
+            `Task "${task.title}" deleted`,
+            () => {
+                console.log('↩️ Task deletion undone');
+                // Navigate back to task
+                navigate(`/tasks/${taskId}`);
+            },
+            5000
+        );
+
+        // Schedule permanent deletion
+        scheduleCommit({ taskId, taskTitle: task.title });
     };
 
     const handleStatusChange = async (status: Status) => {
         if (!taskId) return;
         await updateTask.mutateAsync({ id: taskId, data: { status } });
     };
+
+    // Real-time sync with Socket.io
+    useEffect(() => {
+        if (!taskId) return;
+
+        const handleTaskUpdated = (updatedTask: Task) => {
+            if (updatedTask.id === taskId) {
+                console.log('📡 Real-time: Task updated', taskId);
+                // Update the task in cache
+                queryClient.setQueryData(['task', taskId], updatedTask);
+                // Show notification if updated by another user
+                if (updatedTask.updatedBy && updatedTask.updatedBy !== user?.id) {
+                    showToast({
+                        message: 'Task updated by another user',
+                        type: 'info',
+                        duration: 3000,
+                    });
+                }
+            }
+        };
+
+        const handleTaskDeleted = ({ id }: { id: string }) => {
+            if (id === taskId) {
+                console.log('📡 Real-time: Task deleted', taskId);
+                showToast({
+                    message: 'This task was deleted by another user',
+                    type: 'warning',
+                    duration: 3000,
+                });
+                // Navigate away after a short delay
+                setTimeout(() => navigate('/tasks'), 1000);
+            }
+        };
+
+        // Subscribe to events
+        socketClient.onTaskUpdated(handleTaskUpdated);
+        socketClient.onTaskDeleted(handleTaskDeleted);
+
+        // Cleanup
+        return () => {
+            socketClient.offTaskUpdated(handleTaskUpdated);
+            socketClient.offTaskDeleted(handleTaskDeleted);
+        };
+    }, [taskId, queryClient, navigate, user?.id, showToast]);
 
     const handleDescriptionUpdate = async (newDescription: string) => {
         if (!taskId) return;
@@ -155,7 +237,7 @@ export function TaskDetailsPage() {
                         <Button
                             variant="danger"
                             leftIcon={<Trash2 className="w-4 h-4" />}
-                            onClick={() => setDeleteConfirm(true)}
+                            onClick={() => setIsDeleteModalOpen(true)}
                         >
                             Delete
                         </Button>
@@ -312,8 +394,8 @@ export function TaskDetailsPage() {
 
             {/* Delete Confirmation */}
             <Modal
-                isOpen={deleteConfirm}
-                onClose={() => setDeleteConfirm(false)}
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
                 title="Delete Task"
                 size="sm"
             >
@@ -322,7 +404,7 @@ export function TaskDetailsPage() {
                     This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-3">
-                    <Button variant="ghost" onClick={() => setDeleteConfirm(false)}>
+                    <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>
                         Cancel
                     </Button>
                     <Button

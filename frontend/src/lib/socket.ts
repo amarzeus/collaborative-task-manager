@@ -8,6 +8,7 @@ import type { Task, Notification, Comment } from '../types';
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 
 let socket: Socket | null = null;
+let isConnected = false;
 
 export const socketClient = {
     /**
@@ -25,18 +26,28 @@ export const socketClient = {
         });
 
         socket.on('connect', () => {
-            console.log('Connected to Socket.io server');
+            isConnected = true;
+            console.log('✅ Connected to Socket.io server at', SOCKET_URL);
             // Subscribe to task updates
             socket?.emit('task:subscribe');
         });
 
         socket.on('disconnect', (reason) => {
-            console.log('Disconnected from Socket.io server:', reason);
+            isConnected = false;
+            console.log('❌ Disconnected from Socket.io server:', reason);
         });
 
         socket.on('connect_error', (error) => {
-            console.error('Socket.io connection error:', error);
+            isConnected = false;
+            console.error('🔴 Socket.io connection error:', error);
         });
+
+        // Debug: Log all events
+        if (process.env.NODE_ENV === 'development') {
+            socket.onAny((eventName, ...args) => {
+                console.log('📡 Socket event:', eventName, args);
+            });
+        }
 
         return socket;
     },
@@ -57,6 +68,13 @@ export const socketClient = {
      */
     getSocket(): Socket | null {
         return socket;
+    },
+
+    /**
+     * Check if socket is connected
+     */
+    isConnected(): boolean {
+        return isConnected && socket?.connected === true;
     },
 
     /**

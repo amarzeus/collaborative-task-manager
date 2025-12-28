@@ -10,6 +10,7 @@ export interface User {
     email: string;
     name: string;
     role: Role;
+    avatarUrl?: string;
     isActive?: boolean;
     createdAt?: string;
 }

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAdminStats, useAdminUsers, useSuspendUser, useActivateUser, useUpdateUser } from '../hooks/useAdmin';
 import { CreateUserModal } from '../components/admin/CreateUserModal';
+import { Loader2 } from 'lucide-react';
 import {
     Users,
     UserCheck,
@@ -87,8 +88,9 @@ export function AdminPage() {
         await activateUser.mutateAsync(userId);
     };
 
-    const handleRoleChange = async (userId: string, newRole: string) => {
-        await updateUser.mutateAsync({ id: userId, data: { role: newRole } });
+    const handleRoleChange = async () => {
+        if (!editingUser || !editRole) return;
+        await updateUser.mutateAsync({ id: editingUser, data: { role: editRole } });
         setEditingUser(null);
     };
 
@@ -270,17 +272,34 @@ export function AdminPage() {
                                     </td>
                                     <td className="px-4 py-4">
                                         {editingUser === u.id ? (
-                                            <select
-                                                value={editRole}
-                                                onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                                                className="text-xs bg-slate-800 border border-slate-600 rounded px-2 py-1 text-slate-200"
-                                                autoFocus
-                                                onBlur={() => setEditingUser(null)}
-                                            >
-                                                {ROLES.map(role => (
-                                                    <option key={role} value={role}>{role}</option>
-                                                ))}
-                                            </select>
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    value={editRole}
+                                                    onChange={(e) => setEditRole(e.target.value)}
+                                                    className="text-xs bg-slate-800 border border-slate-600 rounded px-2 py-1 text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    autoFocus
+                                                >
+                                                    {ROLES.map(role => (
+                                                        <option key={role} value={role}>{role}</option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    onClick={handleRoleChange}
+                                                    className="p-1 hover:bg-green-500/20 text-green-400 rounded transition-colors"
+                                                    title="Save"
+                                                    disabled={updateUser.isPending}
+                                                >
+                                                    {updateUser.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingUser(null)}
+                                                    className="p-1 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                                                    title="Cancel"
+                                                    disabled={updateUser.isPending}
+                                                >
+                                                    <UserX className="w-3 h-3" />
+                                                </button>
+                                            </div>
                                         ) : (
                                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${roleColors[u.role] || 'bg-slate-700/50 text-slate-300'}`}>
                                                 {u.role.replace('_', ' ')}

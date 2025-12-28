@@ -10,6 +10,8 @@ import { commentApi } from '../../lib/api';
 import { CommentItem } from './CommentItem';
 import { CommentInput } from './CommentInput';
 import { socketClient } from '../../lib/socket';
+import { useUndo } from '../../hooks/useUndo';
+import { useToast } from '../../providers/ToastProvider';
 
 interface CommentListProps {
     taskId: string;
@@ -20,6 +22,22 @@ export function CommentList({ taskId }: CommentListProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { showUndo } = useToast();
+
+    // Undo functionality for comment deletion
+    const { scheduleCommit } = useUndo<string>({
+        timeout: 5000,
+        onCommit: async (commentId) => {
+            try {
+                await commentApi.delete(commentId);
+                console.log('✅ Comment permanently deleted:', commentId);
+            } catch (err) {
+                console.error('Failed to delete comment:', err);
+                // Restore comment if API call fails
+                fetchComments();
+            }
+        },
+    });
 
     const fetchComments = useCallback(async () => {
         try {
@@ -84,13 +102,42 @@ export function CommentList({ taskId }: CommentListProps) {
         }
     };
 
-    const handleDeleteComment = async (id: string) => {
-        try {
-            await commentApi.delete(id);
-            // Will be removed via socket event
-        } catch (err) {
-            console.error('Failed to delete comment:', err);
+    const handleDeleteComment = (id: string) => {
+        // Find the comment to delete
+        const commentToDelete = comments.find(c => c.id === id);
+        if (!commentToDelete) {
+            console.error('Comment not found:', id);
+            return;
         }
+
+        console.log('🗑️ Deleting comment:', id, commentToDelete.content.substring(0, 30));
+
+        // Optimistically remove from UI
+        setComments(prev => prev.filter(c => c.id !== id));
+
+        // Show undo toast
+        console.log('🍞 Showing undo toast for comment');
+        showUndo(
+            'Comment deleted',
+            () => {
+                // Undo: restore comment
+                console.log('↩️ Undoing comment deletion:', id);
+                setComments(prev => {
+                    // Avoid duplicates
+                    if (prev.some(c => c.id === id)) return prev;
+                    // Insert back in original position
+                    return [...prev, commentToDelete].sort((a, b) =>
+                        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                    );
+                });
+                console.log('↩️ Comment deletion undone');
+            },
+            5000
+        );
+
+        // Schedule permanent deletion
+        console.log('⏰ Scheduling permanent deletion in 5 seconds');
+        scheduleCommit(id);
     };
 
     return (

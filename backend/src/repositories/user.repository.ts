@@ -16,6 +16,7 @@ export interface UpdateUserData {
   email?: string;
   password?: string;
   name?: string;
+  avatarUrl?: string;
   lastLoginAt?: Date;
 }
 
@@ -39,6 +40,24 @@ export const userRepository = {
         role: true,
         isActive: true,
         password: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    });
+  },
+
+  /**
+   * Get user profile (without password)
+   */
+  async getProfile(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
         createdAt: true,
       },
     });
@@ -81,6 +100,23 @@ export const userRepository = {
         name: true,
       },
       orderBy: { name: 'asc' },
+    });
+  },
+
+  /**
+   * Update user avatar
+   */
+  async updateAvatar(id: string, avatarUrl: string) {
+    return prisma.user.update({
+      where: { id },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
+      },
     });
   },
 

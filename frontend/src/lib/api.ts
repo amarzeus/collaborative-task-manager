@@ -358,3 +358,24 @@ export const adminApi = {
         return response.data.data;
     },
 };
+
+// Upload API
+export const uploadApi = {
+    uploadAvatar: async (file: File): Promise<{ avatarUrl: string; user: User }> => {
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const response = await api.post<ApiResponse<{ avatarUrl: string; user: User }>>('/upload/avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data.data;
+    },
+
+    deleteAvatar: async (): Promise<User> => {
+        const response = await api.delete<ApiResponse<User>>('/upload/avatar');
+        return response.data.data;
+    },
+};
+

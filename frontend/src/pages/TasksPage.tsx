@@ -2,9 +2,10 @@
  * Tasks page with full CRUD operations, bulk selection, and Kanban view
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, CheckSquare, Square, CheckCheck, LayoutGrid, List } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     useTasks,
     useCreateTask,
@@ -23,10 +24,14 @@ import { Button } from '../components/ui/Button';
 import { TaskListSkeleton } from '../components/ui/Skeleton';
 import type { Task, TaskFilters, CreateTaskInput, Status, Priority } from '../types/index';
 import clsx from 'clsx';
+import { useUndo } from '../hooks/useUndo';
+import { useToast } from '../providers/ToastProvider';
+import { socketClient } from '../lib/socket';
 
 export function TasksPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [filters, setFilters] = useState<TaskFilters>({
         sortBy: 'createdAt',
         sortOrder: 'desc',
@@ -37,6 +42,20 @@ export function TasksPage() {
 
     // View mode state
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+    const { showUndo } = useToast();
+
+    // Undo functionality for task deletion
+    const { scheduleCommit } = useUndo<{ taskId: string; task: Task }>({
+        timeout: 5000,
+        onCommit: async ({ taskId }) => {
+            try {
+                await deleteTask.mutateAsync(taskId);
+                console.log('✅ Task permanently deleted:', taskId);
+            } catch (err) {
+                console.error('Failed to delete task:', err);
+            }
+        },
+    });
 
     // Selection state (list view only)
     const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
@@ -51,6 +70,44 @@ export function TasksPage() {
     const bulkStatusUpdate = useBulkStatusUpdate();
     const bulkPriorityUpdate = useBulkPriorityUpdate();
     const bulkDelete = useBulkDelete();
+
+    // Real-time sync with Socket.io
+    useEffect(() => {
+        const handleTaskCreated = (newTask: Task) => {
+            console.log('📡 Real-time: Task created', newTask.id);
+            queryClient.setQueryData<Task[]>(['tasks', filters], (old = []) => {
+                // Avoid duplicates
+                if (old.some(t => t.id === newTask.id)) return old;
+                return [newTask, ...old];
+            });
+        };
+
+        const handleTaskUpdated = (updatedTask: Task) => {
+            console.log('📡 Real-time: Task updated', updatedTask.id);
+            queryClient.setQueryData<Task[]>(['tasks', filters], (old = []) =>
+                old.map(t => t.id === updatedTask.id ? updatedTask : t)
+            );
+        };
+
+        const handleTaskDeleted = ({ id }: { id: string }) => {
+            console.log('📡 Real-time: Task deleted', id);
+            queryClient.setQueryData<Task[]>(['tasks', filters], (old = []) =>
+                old.filter(t => t.id !== id)
+            );
+        };
+
+        // Subscribe to events
+        socketClient.onTaskCreated(handleTaskCreated);
+        socketClient.onTaskUpdated(handleTaskUpdated);
+        socketClient.onTaskDeleted(handleTaskDeleted);
+
+        // Cleanup
+        return () => {
+            socketClient.offTaskCreated(handleTaskCreated);
+            socketClient.offTaskUpdated(handleTaskUpdated);
+            socketClient.offTaskDeleted(handleTaskDeleted);
+        };
+    }, [queryClient, filters]);
 
     const isBulkLoading = bulkStatusUpdate.isPending || bulkPriorityUpdate.isPending || bulkDelete.isPending;
 
@@ -74,11 +131,29 @@ export function TasksPage() {
         setEditingTask(null);
     }, [editingTask, updateTask]);
 
-    const handleDelete = useCallback(async () => {
+    const handleDelete = useCallback(() => {
         if (!deleteConfirm) return;
-        await deleteTask.mutateAsync(deleteConfirm);
+
+        // Find the task to delete
+        const taskToDelete = tasks?.find(t => t.id === deleteConfirm);
+        if (!taskToDelete) return;
+
+        // Close modal immediately
         setDeleteConfirm(null);
-    }, [deleteConfirm, deleteTask]);
+
+        // Show undo toast
+        showUndo(
+            `Task "${taskToDelete.title}" deleted`,
+            () => {
+                console.log('↩️ Task deletion undone');
+                // Task will remain in cache, no action needed
+            },
+            5000
+        );
+
+        // Schedule permanent deletion
+        scheduleCommit({ taskId: deleteConfirm, task: taskToDelete });
+    }, [deleteConfirm, tasks, showUndo, scheduleCommit]);
 
     const handleStatusChange = useCallback(
         async (id: string, status: Status) => {

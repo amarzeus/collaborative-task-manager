@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { AvatarUpload } from '../components/profile/AvatarUpload';
 
 export function ProfilePage() {
     const { user } = useAuth();
@@ -28,9 +29,7 @@ export function ProfilePage() {
             {/* Profile Card */}
             <Card>
                 <CardBody className="text-center py-8">
-                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-4xl font-medium shadow-lg ring-4 ring-indigo-500/20">
-                        {user?.name?.charAt(0).toUpperCase()}
-                    </div>
+                    <AvatarUpload />
                     <h2 className="mt-4 text-2xl font-bold text-white">{user?.name}</h2>
                     <p className="mt-1 text-slate-400">{user?.email}</p>
 

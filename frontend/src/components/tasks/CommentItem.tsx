@@ -4,9 +4,10 @@
  */
 
 import { formatDistanceToNow } from 'date-fns';
-import { User, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Comment } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { Avatar } from '../ui/Avatar';
 
 interface CommentItemProps {
     comment: Comment;
@@ -19,10 +20,12 @@ export function CommentItem({ comment, onDelete }: CommentItemProps) {
 
     return (
         <div className="flex gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 group animate-fade-in">
-            {/* Avatar Placeholder */}
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <User className="w-4 h-4 text-indigo-400" />
-            </div>
+            {/* Avatar */}
+            <Avatar
+                src={comment.user?.avatarUrl}
+                name={comment.user?.name || 'Unknown User'}
+                size="sm"
+            />
 
             <div className="flex-grow min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-1">
