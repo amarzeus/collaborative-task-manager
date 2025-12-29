@@ -3,7 +3,7 @@
  * Handles file uploads (avatars)
  */
 
-import { Router, Request } from 'express';
+import { Router } from 'express';
 import { uploadAvatar, deleteAvatarFile } from '../middleware/upload.middleware.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { userRepository } from '../repositories/user.repository.js';

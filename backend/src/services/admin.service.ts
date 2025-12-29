@@ -129,7 +129,7 @@ export const adminService = {
   /**
    * Create a new user (admin operation)
    */
-  async createUser(data: AdminCreateUserDto, creatorId: string) {
+  async createUser(data: AdminCreateUserDto, _creatorId: string) {
     // Check if email already exists
     const existing = await prisma.user.findUnique({
       where: { email: data.email },
