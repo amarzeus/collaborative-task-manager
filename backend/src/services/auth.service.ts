@@ -143,6 +143,7 @@ export const authService = {
       throw AppError.notFound('User not found');
     }
     // Exclude password from response
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   },

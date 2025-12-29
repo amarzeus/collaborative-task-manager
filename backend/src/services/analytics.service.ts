@@ -4,7 +4,6 @@
  */
 
 import { prisma } from '../lib/prisma.js';
-import { Status, Priority } from '@prisma/client';
 
 export type AnalyticsScope = 'personal' | 'global';
 

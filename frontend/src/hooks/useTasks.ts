@@ -24,6 +24,7 @@ export function useTasks(filters?: TaskFilters) {
 
     // Set up real-time listeners
     useEffect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const handleTaskCreated = (_task: Task) => {
             queryClient.invalidateQueries({ queryKey: TASKS_QUERY_KEY });
         };

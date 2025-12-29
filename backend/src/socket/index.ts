@@ -34,6 +34,7 @@ export function setupSocketHandlers(io: Server): void {
       socket.data.userId = decoded.userId;
       socket.data.authenticated = true;
       next();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
       socket.data.authenticated = false;
       next();
