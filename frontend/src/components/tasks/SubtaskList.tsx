@@ -189,7 +189,7 @@ export function SubtaskList({ description, onUpdate, readOnly = false }: Subtask
 
     // Final combined handleSave for both edits and additions
     const saveAllChanges = () => {
-        let resultLines = description.split('\n');
+        const resultLines = description.split('\n');
 
         // 1. Update existing subtasks
         subtasks.filter(st => st.lineIndex !== -1).forEach(task => {

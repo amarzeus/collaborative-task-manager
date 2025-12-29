@@ -213,15 +213,14 @@ describe('TaskService', () => {
       };
 
       (taskRepository.findById as jest.Mock).mockResolvedValue(mockExistingTask);
-      (userRepository.findById as jest.Mock).mockResolvedValue({ id: 'user-3', name: 'New Assignee' });
+      (userRepository.findById as jest.Mock).mockResolvedValue({
+        id: 'user-3',
+        name: 'New Assignee',
+      });
       (taskRepository.update as jest.Mock).mockResolvedValue(updatedTask);
       (notificationRepository.create as jest.Mock).mockResolvedValue({});
 
-      const result = await taskService.updateTask(
-        'task-1',
-        { assignedToId: 'user-3' },
-        'user-1'
-      );
+      const result = await taskService.updateTask('task-1', { assignedToId: 'user-3' }, 'user-1');
 
       expect(result.sendNotificationTo).toBe('user-3');
       expect(notificationRepository.create).toHaveBeenCalledWith({
@@ -246,11 +245,7 @@ describe('TaskService', () => {
       (userRepository.findById as jest.Mock).mockResolvedValue({ id: 'user-1', name: 'Creator' });
       (taskRepository.update as jest.Mock).mockResolvedValue(updatedTask);
 
-      const result = await taskService.updateTask(
-        'task-1',
-        { assignedToId: 'user-1' },
-        'user-1'
-      );
+      const result = await taskService.updateTask('task-1', { assignedToId: 'user-1' }, 'user-1');
 
       expect(result.sendNotificationTo).toBeUndefined();
       expect(notificationRepository.create).not.toHaveBeenCalled();
@@ -268,11 +263,7 @@ describe('TaskService', () => {
       (taskRepository.findById as jest.Mock).mockResolvedValue(mockExistingTask);
       (taskRepository.update as jest.Mock).mockResolvedValue(updatedTask);
 
-      const result = await taskService.updateTask(
-        'task-1',
-        { title: 'Updated Title' },
-        'user-1'
-      );
+      const result = await taskService.updateTask('task-1', { title: 'Updated Title' }, 'user-1');
 
       expect(result.sendNotificationTo).toBeUndefined();
       expect(notificationRepository.create).not.toHaveBeenCalled();

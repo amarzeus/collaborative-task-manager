@@ -3,7 +3,7 @@
  * Handles bulk actions on tasks and users for admin operations
  */
 
-import { Prisma, Status, Priority } from '@prisma/client';
+import { Status, Priority } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../lib/errors.js';
 import { auditService } from './audit.service.js';
@@ -50,7 +50,7 @@ export const bulkService = {
     missingIds.forEach((id) => errors.push({ taskId: id, error: 'Task not found' }));
 
     switch (action) {
-      case 'assign':
+      case 'assign': {
         if (!data?.assigneeId) {
           throw AppError.badRequest('Assignee ID required for assign action');
         }
@@ -87,8 +87,9 @@ export const bulkService = {
           },
         });
         break;
+      }
 
-      case 'update_status':
+      case 'update_status': {
         if (!data?.status) {
           throw AppError.badRequest('Status required for update_status action');
         }
@@ -107,8 +108,9 @@ export const bulkService = {
           metadata: { taskIds: Array.from(existingIds), newStatus: data.status },
         });
         break;
+      }
 
-      case 'update_priority':
+      case 'update_priority': {
         if (!data?.priority) {
           throw AppError.badRequest('Priority required for update_priority action');
         }
@@ -127,8 +129,9 @@ export const bulkService = {
           metadata: { taskIds: Array.from(existingIds), newPriority: data.priority },
         });
         break;
+      }
 
-      case 'delete':
+      case 'delete': {
         const deleteResult = await prisma.task.deleteMany({
           where: { id: { in: Array.from(existingIds) } },
         });
@@ -143,8 +146,9 @@ export const bulkService = {
           metadata: { taskIds: Array.from(existingIds), count: processed },
         });
         break;
+      }
 
-      case 'archive':
+      case 'archive': {
         // Mark as completed (archive)
         const archiveResult = await prisma.task.updateMany({
           where: { id: { in: Array.from(existingIds) } },
@@ -161,6 +165,7 @@ export const bulkService = {
           metadata: { taskIds: Array.from(existingIds), count: processed },
         });
         break;
+      }
 
       default:
         throw AppError.badRequest(`Unknown action: ${action}`);

@@ -39,7 +39,7 @@ describe('AuthService', () => {
     const mockRegisterData = {
       name: 'Test User',
       email: 'test@example.com',
-      password: 'Password123',  // min 8, uppercase, number
+      password: 'Password123', // min 8, uppercase, number
     };
 
     const mockCreatedUser = {
@@ -221,7 +221,11 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       (userRepository.update as jest.Mock).mockResolvedValue({ ...mockUser });
 
-      const result = await authService.changePassword('user-1', 'currentPassword', 'newPassword123');
+      const result = await authService.changePassword(
+        'user-1',
+        'currentPassword',
+        'newPassword123'
+      );
 
       expect(bcrypt.compare).toHaveBeenCalledWith('currentPassword', 'hashed-current-password');
       expect(bcrypt.hash).toHaveBeenCalledWith('newPassword123', 12);

@@ -19,7 +19,7 @@ describe('DTO Validation', () => {
     it('should accept valid registration data', () => {
       const validData = {
         email: 'test@example.com',
-        password: 'Password123',  // min 8, uppercase, number
+        password: 'Password123', // min 8, uppercase, number
         name: 'Test User',
       };
 
@@ -54,7 +54,7 @@ describe('DTO Validation', () => {
     it('should reject password shorter than 8 characters', () => {
       const invalidData = {
         email: 'test@example.com',
-        password: 'Pass1',  // too short
+        password: 'Pass1', // too short
         name: 'Test User',
       };
 

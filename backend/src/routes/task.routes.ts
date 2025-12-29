@@ -25,4 +25,3 @@ taskRouter.delete('/:id', taskController.deleteTask);
 
 // Comments for a task
 taskRouter.get('/:taskId/comments', commentController.getTaskComments);
-
