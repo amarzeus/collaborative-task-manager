@@ -4,7 +4,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { authenticate, AuthenticatedRequest } from '../../middleware/auth.middleware';
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../lib/errors';

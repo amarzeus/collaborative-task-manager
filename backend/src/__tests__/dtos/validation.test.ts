@@ -3,13 +3,7 @@
  * Tests input validation for API requests
  */
 
-import {
-  registerSchema,
-  loginSchema,
-  createTaskSchema,
-  updateTaskSchema,
-  taskQuerySchema,
-} from '../../dtos/index';
+import { registerSchema, createTaskSchema, taskQuerySchema } from '../../dtos/index';
 
 describe('DTO Validation', () => {
   describe('registerSchema', () => {
