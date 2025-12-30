@@ -140,16 +140,12 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps chromium
 
-    - name: Start Backend
-      working-directory: ./backend
+    - name: Run E2E Tests
       env:
         DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
         JWT_SECRET: test_secret
         PORT: 3001
-      run: npm run dev &
-
-    - name: Run E2E Tests
-      env:
+        VITE_API_URL: http://localhost:3001/api/v1
         PLAYWRIGHT_BASE_URL: http://localhost:5173
       run: npm run test:e2e
 
