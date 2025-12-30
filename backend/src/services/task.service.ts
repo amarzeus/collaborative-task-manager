@@ -19,7 +19,7 @@ export const taskService = {
   /**
    * Get all tasks with optional filtering
    */
-  async getTasks(query: TaskQueryDto, userId: string) {
+  async getTasks(query: TaskQueryDto, userId: string, organizationId?: string | null) {
     const filters: TaskFilters = {};
 
     if (query.status) {
@@ -50,6 +50,25 @@ export const taskService = {
       filters.sortOrder = query.sortOrder;
     }
 
+    // Filter by organization context
+    // If organizationId is provided, filter by it
+    // If explicitly null (Individual Mode), filter where organizationId is null
+    if (organizationId !== undefined) {
+      filters.organizationId = organizationId;
+    }
+
+    // v2.0: Add visibility filtering
+    // If in organization context, fetch user's teams for TEAM visibility filtering
+    filters.userId = userId;
+    if (organizationId) {
+      const { prisma } = await import('../lib/prisma.js');
+      const teamMemberships = await prisma.teamMembership.findMany({
+        where: { userId },
+        select: { teamId: true },
+      });
+      filters.teamIds = teamMemberships.map((tm: { teamId: string }) => tm.teamId);
+    }
+
     return taskRepository.findAll(filters);
   },
 
@@ -68,7 +87,7 @@ export const taskService = {
    * Create a new task
    * @returns Task and notification target (if assigned)
    */
-  async createTask(data: CreateTaskDto, creatorId: string): Promise<TaskServiceResponse> {
+  async createTask(data: CreateTaskDto, creatorId: string, organizationId?: string | null): Promise<TaskServiceResponse> {
     // Validate assignee exists if provided
     if (data.assignedToId) {
       const assignee = await userRepository.findById(data.assignedToId);
@@ -85,6 +104,7 @@ export const taskService = {
       status: data.status as Status,
       creatorId,
       assignedToId: data.assignedToId || null,
+      organizationId: organizationId || null,
     });
 
     // Create notification for assignee if different from creator

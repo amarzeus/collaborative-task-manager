@@ -13,6 +13,7 @@ A production-ready, full-stack Task Management application with real-time collab
 
 ## 🌟 Features
 
+### Core Features
 - **User Authentication**: Secure JWT-based auth with bcrypt password hashing
 - **Full CRUD Operations**: Create, read, update, and delete tasks
 - **Real-time Updates**: Live task updates using Socket.io
@@ -20,9 +21,25 @@ A production-ready, full-stack Task Management application with real-time collab
 - **Dashboard**: Personal views for assigned, created, and overdue tasks
 - **Filtering & Sorting**: Filter by status, priority; sort by due date
 - **Responsive Design**: Works seamlessly on desktop and mobile
-- **Role-Based Access Control**: 5-level role hierarchy (User → Admin)
-- **Admin Dashboard**: User management, stats, and system overview
-- **Audit Logging**: Track all admin actions for compliance
+
+### V2.0 Features
+- **Multi-Tenancy**: Organizations and Teams with scoped access
+- **AI Assistant**: Natural language task management + auto-categorization
+- **Analytics Dashboard**: Productivity metrics, trends, insights
+- **Team Dashboards**: Team and manager-level analytics
+- **Task Templates**: Reusable task templates
+- **Task Comments**: Collaborative discussions
+
+### Security Features
+- **Helmet.js**: Security headers (CSP, XSS, etc.)
+- **Rate Limiting**: Auth (10/15min), AI (20/min), API (100/15min)
+- **XSS Protection**: Input sanitization middleware
+- **JWT HttpOnly Cookies**: Secure token storage
+
+### PWA Support
+- **Installable**: Add to home screen on mobile/desktop
+- **Offline Caching**: Service worker with network-first strategy
+- **Theme Color**: Branded indigo experience
 
 ## 🛠️ Tech Stack
 
@@ -250,7 +267,18 @@ npm test
 | `validation.test.ts` | 14 | DTO Validation (Zod Schemas) |
 | `auth.middleware.test.ts` | 9 | JWT Verification, Token Expiry |
 | `socket.test.ts` | 7 | Real-time Socket.io Handlers |
-| **Total** | **84** | ✅ All Passing |
+| `team.service.test.ts` | 18 | Team CRUD, RBAC, Membership |
+| `ai.service.test.ts` | 19 | AI Functions, Conversations |
+| `analytics.service.test.ts` | 14 | Metrics, Trends, Insights |
+| `organization.service.test.ts` | 7 | Organization CRUD |
+| `comment.service.test.ts` | 12 | Comments, Notifications |
+| `template.service.test.ts` | 13 | Template Access Control |
+| `team-dashboard.service.test.ts` | 10 | Team Analytics |
+| `manager-dashboard.service.test.ts` | 11 | Cross-Team Analytics |
+| `role.middleware.test.ts` | 25 | Role Hierarchy, Guards |
+| `tenant.middleware.test.ts` | 7 | Multi-Tenancy Context |
+| `validate.middleware.test.ts` | 12 | Request Validation |
+| **Total** | **232** | ✅ All Passing |
 
 ### Frontend Tests (Vitest)
 
@@ -266,7 +294,7 @@ npm run test:run
 | `Card.test.tsx` | 4 | Layout Components |
 | **Total** | **15** | ✅ All Passing |
 
-### Total Test Coverage: 99 Tests
+### Total Test Coverage: 282 Tests (232 Backend + 50 Frontend)
 
 ## 🐳 Docker Configuration
 

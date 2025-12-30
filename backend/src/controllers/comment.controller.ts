@@ -3,17 +3,17 @@
  * Handles HTTP requests for task comments
  */
 
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Server } from 'socket.io';
 import { commentService } from '../services/comment.service.js';
-import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
+
 
 export const commentController = {
   /**
    * GET /api/v1/tasks/:taskId/comments
    * Get all comments for a task
    */
-  async getTaskComments(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async getTaskComments(req: Request, res: Response, next: NextFunction) {
     try {
       const comments = await commentService.getCommentsByTaskId(req.params.taskId);
       res.json({
@@ -29,9 +29,9 @@ export const commentController = {
    * POST /api/v1/comments
    * Create a new comment
    */
-  async createComment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async createComment(req: Request, res: Response, next: NextFunction) {
     try {
-      const { comment, notifyUserId } = await commentService.createComment(req.body, req.user!.id);
+      const { comment, notifyUserId } = await commentService.createComment(req.body, (req as any).user!.id);
 
       // Emit real-time update
       const io: Server = req.app.get('io');
@@ -60,9 +60,9 @@ export const commentController = {
    * PUT /api/v1/comments/:id
    * Update a comment
    */
-  async updateComment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async updateComment(req: Request, res: Response, next: NextFunction) {
     try {
-      const comment = await commentService.updateComment(req.params.id, req.body, req.user!.id);
+      const comment = await commentService.updateComment(req.params.id, req.body, (req as any).user!.id);
 
       // Emit real-time update
       const io: Server = req.app.get('io');
@@ -81,9 +81,9 @@ export const commentController = {
    * DELETE /api/v1/comments/:id
    * Delete a comment
    */
-  async deleteComment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async deleteComment(req: Request, res: Response, next: NextFunction) {
     try {
-      await commentService.deleteComment(req.params.id, req.user!.id);
+      await commentService.deleteComment(req.params.id, (req as any).user!.id);
 
       // Emit real-time update
       const io: Server = req.app.get('io');

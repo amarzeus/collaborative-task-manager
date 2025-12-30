@@ -2,10 +2,15 @@
 .vscode/
 .idea/
 *.log
+
+# Dependencies
 node_modules/
+**/node_modules/
+.npm
 
 # Build outputs
 dist/
+build/
 backend/dist/
 frontend/dist/
 
@@ -13,3 +18,15 @@ frontend/dist/
 .env
 .env.local
 .env.*.local
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+*.swp
+*.swo
+
+# Prisma
+*.db
+*.db-journal

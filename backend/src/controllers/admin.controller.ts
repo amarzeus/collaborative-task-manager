@@ -3,11 +3,11 @@
  * Handles admin-specific HTTP requests for user management
  */
 
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { adminService } from '../services/admin.service.js';
 import { auditService } from '../services/audit.service.js';
 import { bulkService, type BulkTaskInput } from '../services/bulk.service.js';
-import type { AuthenticatedRequest } from '../middleware/auth.middleware.js';
+
 import type { AdminCreateUserDto, AdminUpdateUserDto, AdminUserQueryDto } from '../dtos/index.js';
 
 export const adminController = {
@@ -15,7 +15,7 @@ export const adminController = {
    * GET /api/v1/admin/users
    * List all users with optional filtering and pagination
    */
-  async listUsers(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async listUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query as unknown as AdminUserQueryDto;
       const result = await adminService.listUsers(query);
@@ -29,7 +29,7 @@ export const adminController = {
    * GET /api/v1/admin/users/:id
    * Get a single user by ID
    */
-  async getUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getUserById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const user = await adminService.getUserById(id);
@@ -43,15 +43,15 @@ export const adminController = {
    * POST /api/v1/admin/users
    * Create a new user
    */
-  async createUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async createUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = req.body as AdminCreateUserDto;
-      const user = await adminService.createUser(data, req.user!.id);
+      const user = await adminService.createUser(data, (req as any).user!.id);
 
       // Audit log
       await auditService.logUserAction('CREATE', user, {
-        id: req.user!.id,
-        email: req.user!.email,
+        id: (req as any).user!.id,
+        email: (req as any).user!.email,
       });
 
       res.status(201).json({ success: true, data: user });
@@ -64,17 +64,17 @@ export const adminController = {
    * PUT /api/v1/admin/users/:id
    * Update a user
    */
-  async updateUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const data = req.body as AdminUpdateUserDto;
-      const user = await adminService.updateUser(id, data, req.user!.id);
+      const user = await adminService.updateUser(id, data, (req as any).user!.id);
 
       // Audit log
       await auditService.logUserAction(
         'UPDATE',
         user,
-        { id: req.user!.id, email: req.user!.email },
+        { id: (req as any).user!.id, email: (req as any).user!.email },
         { changes: data as Record<string, { old: unknown; new: unknown }> }
       );
 
@@ -88,16 +88,16 @@ export const adminController = {
    * POST /api/v1/admin/users/:id/suspend
    * Suspend a user account
    */
-  async suspendUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async suspendUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const result = await adminService.suspendUser(id, req.user!.id);
+      const result = await adminService.suspendUser(id, (req as any).user!.id);
 
       // Audit log
       await auditService.logUserAction(
         'SUSPEND',
         { id },
-        { id: req.user!.id, email: req.user!.email }
+        { id: (req as any).user!.id, email: (req as any).user!.email }
       );
 
       res.json({ success: true, message: result.message });
@@ -110,7 +110,7 @@ export const adminController = {
    * POST /api/v1/admin/users/:id/activate
    * Activate a suspended user account
    */
-  async activateUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async activateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const result = await adminService.activateUser(id);
@@ -119,7 +119,7 @@ export const adminController = {
       await auditService.logUserAction(
         'ACTIVATE',
         { id },
-        { id: req.user!.id, email: req.user!.email }
+        { id: (req as any).user!.id, email: (req as any).user!.email }
       );
 
       res.json({ success: true, message: result.message });
@@ -132,7 +132,7 @@ export const adminController = {
    * GET /api/v1/admin/stats
    * Get admin dashboard statistics
    */
-  async getStats(_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getStats(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const stats = await adminService.getStats();
       res.json({ success: true, data: stats });
@@ -146,15 +146,15 @@ export const adminController = {
    * Bulk operations on tasks
    */
   async bulkTaskOperation(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const input = req.body as BulkTaskInput;
       const result = await bulkService.bulkTaskOperation(input, {
-        id: req.user!.id,
-        email: req.user!.email,
+        id: (req as any).user!.id,
+        email: (req as any).user!.email,
       });
       res.json({ success: true, data: result });
     } catch (error) {
@@ -167,7 +167,7 @@ export const adminController = {
    * Preview bulk operation before executing
    */
   async bulkTaskPreview(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
@@ -184,7 +184,7 @@ export const adminController = {
    * GET /api/v1/admin/audit-logs
    * Get audit logs with filtering
    */
-  async getAuditLogs(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getAuditLogs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const filters = req.query as {
         entityType?: string;
@@ -212,7 +212,7 @@ export const adminController = {
    * Get audit history for a specific entity
    */
   async getEntityAuditHistory(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {

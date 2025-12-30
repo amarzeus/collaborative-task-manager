@@ -10,25 +10,28 @@ datasource db {
 
 /// User model for authentication and task ownership
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String
-  name          String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  isActive      Boolean        @default(true)
-  lastLoginAt   DateTime?
-  managerId     String?
-  role          Role           @default(USER)
-  avatarUrl     String?
-  comments      Comment[]
-  notifications Notification[]
-  taskHistory   TaskHistory[]
-  taskTemplates TaskTemplate[]
-  assignedTasks Task[]         @relation("AssignedTasks")
-  createdTasks  Task[]         @relation("CreatedTasks")
-  manager       User?          @relation("ManagerReports", fields: [managerId], references: [id])
-  directReports User[]         @relation("ManagerReports")
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  name            String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  isActive        Boolean          @default(true)
+  lastLoginAt     DateTime?
+  managerId       String?
+  role            Role             @default(USER)
+  avatarUrl       String?
+  comments        Comment[]
+  notifications   Notification[]
+  taskHistory     TaskHistory[]
+  taskTemplates   TaskTemplate[]
+  assignedTasks   Task[]           @relation("AssignedTasks")
+  createdTasks    Task[]           @relation("CreatedTasks")
+  manager         User?            @relation("ManagerReports", fields: [managerId], references: [id])
+  directReports   User[]           @relation("ManagerReports")
+  // v2.0 Multi-tenancy relations
+  memberships     Membership[]
+  teamMemberships TeamMembership[]
 
   @@index([role])
   @@index([isActive])
@@ -38,28 +41,39 @@ model User {
 
 /// Task model with full CRUD support
 model Task {
-  id            String         @id @default(uuid())
-  title         String         @db.VarChar(100)
-  description   String
-  dueDate       DateTime
-  priority      Priority       @default(MEDIUM)
-  status        Status         @default(TODO)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  creatorId     String
-  assignedToId  String?
-  version       Int            @default(1)
-  comments      Comment[]
-  notifications Notification[]
-  history       TaskHistory[]
-  assignedTo    User?          @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  creator       User           @relation("CreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
+  id             String          @id @default(uuid())
+  title          String          @db.VarChar(100)
+  description    String
+  dueDate        DateTime
+  priority       Priority        @default(MEDIUM)
+  status         Status          @default(TODO)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  creatorId      String
+  assignedToId   String?
+  version        Int             @default(1)
+  // v2.0 Multi-tenancy fields
+  visibility     TaskVisibility  @default(PRIVATE)
+  organizationId String?
+  teamId         String?
+  
+  comments       Comment[]
+  notifications  Notification[]
+  history        TaskHistory[]
+  assignedTo     User?           @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  creator        User            @relation("CreatedTasks", fields: [creatorId], references: [id], onDelete: Cascade)
+  // v2.0 relations
+  organization   Organization?   @relation("OrganizationTasks", fields: [organizationId], references: [id])
+  team           Team?           @relation("TeamTasks", fields: [teamId], references: [id])
 
   @@index([creatorId])
   @@index([assignedToId])
   @@index([status])
   @@index([priority])
   @@index([dueDate])
+  @@index([organizationId])
+  @@index([teamId])
+  @@index([visibility])
   @@map("tasks")
 }
 
@@ -171,7 +185,7 @@ enum Status {
   COMPLETED
 }
 
-/// User roles for access control
+/// User roles for access control (v1.0 - kept for backward compatibility)
 enum Role {
   USER
   TEAM_LEAD
@@ -179,3 +193,139 @@ enum Role {
   ADMIN
   SUPER_ADMIN
 }
+
+// ============================================
+// v2.0 Multi-Tenancy Models
+// Epic 7: Organization & Multi-Tenancy
+// ============================================
+
+/// Organization role for multi-tenant RBAC
+enum OrgRole {
+  MEMBER
+  MANAGER
+  SUPER_ADMIN
+}
+
+/// Team role within an organization
+enum TeamRole {
+  MEMBER
+  LEADER
+}
+
+/// Task visibility scope
+enum TaskVisibility {
+  PRIVATE      // Only creator can see/edit
+  TEAM         // All team members can see, leader can assign
+  ORGANIZATION // All org members can see
+}
+
+/// Organization plan tiers
+enum PlanType {
+  FREE
+  TEAM
+  BUSINESS
+  ENTERPRISE
+}
+
+/// Organization model for multi-tenancy
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  plan        PlanType     @default(FREE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  teams       Team[]
+  memberships Membership[]
+  tasks       Task[]       @relation("OrganizationTasks")
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+/// Team within an organization
+model Team {
+  id             String           @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships    TeamMembership[]
+  tasks          Task[]           @relation("TeamTasks")
+
+  @@index([organizationId])
+  @@map("teams")
+}
+
+/// Organization membership (user belongs to org with role)
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrgRole      @default(MEMBER)
+  createdAt      DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+/// Team membership (user belongs to team with role)
+model TeamMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      TeamRole @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("team_memberships")
+}
+
+// ============================================
+// v2.0 AI Assistant Models
+// Epic 14: AI Assistant
+// ============================================
+
+/// AI conversation history for context retention
+model AIConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  messages  Json     // Array of {role, content, timestamp}
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+/// AI action audit log for compliance
+model AIAuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  params    Json
+  result    String   // SUCCESS or FAILED
+  error     String?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("ai_audit_logs")
+}
+

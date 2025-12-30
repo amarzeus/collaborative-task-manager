@@ -11,6 +11,15 @@ module.exports = {
         '!src/**/*.d.ts',
         '!src/index.ts',
     ],
+    coverageThreshold: {
+        global: {
+            branches: 50,
+            functions: 60,
+            lines: 60,
+            statements: 60,
+        },
+    },
+    coverageReporters: ['text', 'lcov', 'html'],
     transform: {
         '^.+\\.ts$': ['ts-jest', {
             useESM: true,

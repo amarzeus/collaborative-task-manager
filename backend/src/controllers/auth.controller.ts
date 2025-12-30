@@ -5,7 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/auth.service.js';
-import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
+
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -71,9 +71,9 @@ export const authController = {
    * GET /api/v1/auth/me
    * Get current user profile
    */
-  async getMe(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async getMe(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await authService.getProfile(req.user!.id);
+      const user = await authService.getProfile((req as any).user!.id);
       res.json({
         success: true,
         data: user,
@@ -87,9 +87,9 @@ export const authController = {
    * PUT /api/v1/auth/profile
    * Update user profile
    */
-  async updateProfile(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await authService.updateProfile(req.user!.id, req.body);
+      const user = await authService.updateProfile((req as any).user!.id, req.body);
       res.json({
         success: true,
         data: user,
@@ -103,10 +103,10 @@ export const authController = {
    * PUT /api/v1/auth/password
    * Change user password
    */
-  async changePassword(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async changePassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { currentPassword, newPassword } = req.body;
-      await authService.changePassword(req.user!.id, currentPassword, newPassword);
+      await authService.changePassword((req as any).user!.id, currentPassword, newPassword);
       res.json({
         success: true,
         message: 'Password changed successfully',
@@ -120,10 +120,10 @@ export const authController = {
    * DELETE /api/v1/auth/account
    * Delete user account
    */
-  async deleteAccount(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async deleteAccount(req: Request, res: Response, next: NextFunction) {
     try {
       const { password } = req.body;
-      await authService.deleteAccount(req.user!.id, password);
+      await authService.deleteAccount((req as any).user!.id, password);
       res.clearCookie('token');
       res.json({
         success: true,

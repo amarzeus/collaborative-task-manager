@@ -14,22 +14,12 @@ export interface JwtPayload {
   email: string;
 }
 
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    name: string;
-    role: Role;
-    isActive: boolean;
-  };
-}
 
 /**
- * Middleware to authenticate requests using JWT
  * Extracts token from cookies or Authorization header
  */
 export async function authenticate(
-  req: AuthenticatedRequest,
+  req: Request,
   _res: Response,
   next: NextFunction
 ): Promise<void> {
@@ -61,7 +51,7 @@ export async function authenticate(
     }
 
     // Attach user to request
-    req.user = user;
+    (req as any).user = user;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {

@@ -3,19 +3,23 @@
  * Handles HTTP requests for task management
  */
 
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Server } from 'socket.io';
 import { taskService } from '../services/task.service.js';
-import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
+
 
 export const taskController = {
   /**
    * GET /api/v1/tasks
    * Get all tasks with optional filtering
    */
-  async getTasks(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async getTasks(req: Request, res: Response, next: NextFunction) {
     try {
-      const tasks = await taskService.getTasks(req.query as any, req.user!.id);
+      const tasks = await taskService.getTasks(
+        req.query as any,
+        (req as any).user!.id,
+        (req as any).tenantScope?.organizationId || null
+      );
       res.json({
         success: true,
         data: tasks,
@@ -29,7 +33,7 @@ export const taskController = {
    * GET /api/v1/tasks/:id
    * Get a single task by ID
    */
-  async getTask(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async getTask(req: Request, res: Response, next: NextFunction) {
     try {
       const task = await taskService.getTaskById(req.params.id);
       res.json({
@@ -45,9 +49,13 @@ export const taskController = {
    * POST /api/v1/tasks
    * Create a new task
    */
-  async createTask(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async createTask(req: Request, res: Response, next: NextFunction) {
     try {
-      const { task, sendNotificationTo } = await taskService.createTask(req.body, req.user!.id);
+      const { task, sendNotificationTo } = await taskService.createTask(
+        req.body,
+        (req as any).user!.id,
+        (req as any).tenantScope?.organizationId || null
+      );
 
       // Emit real-time update
       const io: Server = req.app.get('io');
@@ -76,12 +84,12 @@ export const taskController = {
    * PUT /api/v1/tasks/:id
    * Update a task
    */
-  async updateTask(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async updateTask(req: Request, res: Response, next: NextFunction) {
     try {
       const { task, sendNotificationTo } = await taskService.updateTask(
         req.params.id,
         req.body,
-        req.user!.id
+        (req as any).user!.id
       );
 
       // Emit real-time update
@@ -111,9 +119,9 @@ export const taskController = {
    * DELETE /api/v1/tasks/:id
    * Delete a task
    */
-  async deleteTask(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async deleteTask(req: Request, res: Response, next: NextFunction) {
     try {
-      await taskService.deleteTask(req.params.id, req.user!.id);
+      await taskService.deleteTask(req.params.id, (req as any).user!.id);
 
       // Emit real-time update
       const io: Server = req.app.get('io');
@@ -132,10 +140,10 @@ export const taskController = {
    * POST /api/v1/tasks/bulk
    * Bulk update tasks - allows users to update status/priority of multiple tasks
    */
-  async bulkUpdate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async bulkUpdate(req: Request, res: Response, next: NextFunction) {
     try {
       const { taskIds, action, data } = req.body;
-      const userId = req.user!.id;
+      const userId = (req as any).user!.id;
 
       const results = {
         success: true,

@@ -109,3 +109,56 @@ export const adminUserQuerySchema = z.object({
 export type AdminCreateUserDto = z.infer<typeof adminCreateUserSchema>;
 export type AdminUpdateUserDto = z.infer<typeof adminUpdateUserSchema>;
 export type AdminUserQueryDto = z.infer<typeof adminUserQuerySchema>;
+
+// ============== Organization DTOs ==============
+
+export const planTypeEnum = z.enum(['FREE', 'TEAM', 'BUSINESS', 'ENTERPRISE']);
+
+export const createOrganizationSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+  slug: z.string()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(50, 'Slug too long')
+    .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
+});
+
+export const updateOrganizationSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  slug: z.string()
+    .min(3)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
+  plan: planTypeEnum.optional(),
+});
+
+export type CreateOrganizationDto = z.infer<typeof createOrganizationSchema>;
+export type UpdateOrganizationDto = z.infer<typeof updateOrganizationSchema>;
+
+// ============== Team DTOs ==============
+
+export const teamRoleEnum = z.enum(['LEADER', 'MEMBER']);
+
+export const createTeamSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+  description: z.string().max(500, 'Description too long').optional(),
+});
+
+export const updateTeamSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+});
+
+export const addTeamMemberSchema = z.object({
+  userId: z.string().uuid('Invalid user ID'),
+  role: teamRoleEnum.default('MEMBER'),
+});
+
+export const updateTeamMemberSchema = z.object({
+  role: teamRoleEnum,
+});
+
+export type CreateTeamDto = z.infer<typeof createTeamSchema>;
+export type UpdateTeamDto = z.infer<typeof updateTeamSchema>;
+export type AddTeamMemberDto = z.infer<typeof addTeamMemberSchema>;
+export type UpdateTeamMemberDto = z.infer<typeof updateTeamMemberSchema>;

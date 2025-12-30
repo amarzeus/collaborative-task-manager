@@ -83,6 +83,7 @@ describe('TaskService', () => {
         status: 'TODO',
         creatorId: 'user-1',
         assignedToId: null,
+        organizationId: null,
       });
     });
 

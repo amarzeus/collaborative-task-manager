@@ -3,9 +3,9 @@
  * Handles file uploads (avatars)
  */
 
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { uploadAvatar, deleteAvatarFile } from '../middleware/upload.middleware.js';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 import { userRepository } from '../repositories/user.repository.js';
 
 const router = Router();
@@ -18,7 +18,7 @@ router.post(
   '/avatar',
   authenticate,
   uploadAvatar.single('avatar'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: Request, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -27,7 +27,7 @@ router.post(
         });
       }
 
-      const userId = req.user!.id;
+      const userId = (req as any).user!.id;
       const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
       // Get current user to check for old avatar
@@ -62,9 +62,9 @@ router.post(
  * DELETE /api/v1/upload/avatar
  * Delete user avatar
  */
-router.delete('/avatar', authenticate, async (req: AuthenticatedRequest, res) => {
+router.delete('/avatar', authenticate, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
 
     // Get current user
     const currentUser = await userRepository.findById(userId);

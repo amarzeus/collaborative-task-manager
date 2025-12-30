@@ -14,6 +14,7 @@ export interface CreateTaskData {
   status: Status;
   creatorId: string;
   assignedToId?: string | null;
+  organizationId?: string | null;
 }
 
 export interface UpdateTaskData {
@@ -33,6 +34,10 @@ export interface TaskFilters {
   overdue?: boolean;
   sortBy?: 'dueDate' | 'createdAt' | 'priority';
   sortOrder?: 'asc' | 'desc';
+  organizationId?: string | null;
+  // v2.0 Visibility filters
+  userId?: string; // Current user for visibility check
+  teamIds?: string[]; // Teams user belongs to for TEAM visibility
 }
 
 const taskSelect = {
@@ -46,6 +51,9 @@ const taskSelect = {
   updatedAt: true,
   creatorId: true,
   assignedToId: true,
+  visibility: true,
+  organizationId: true,
+  teamId: true,
   creator: {
     select: { id: true, name: true, email: true },
   },
@@ -57,6 +65,7 @@ const taskSelect = {
 export const taskRepository = {
   /**
    * Find all tasks with optional filtering and sorting
+   * v2.0: Added visibility-based access control
    */
   async findAll(filters: TaskFilters = {}) {
     const where: Prisma.TaskWhereInput = {};
@@ -80,6 +89,35 @@ export const taskRepository = {
     if (filters.overdue) {
       where.dueDate = { lt: new Date() };
       where.status = { not: 'COMPLETED' };
+    }
+
+    // Filter by organization (or lack thereof for individual mode)
+    if (filters.organizationId !== undefined) {
+      where.organizationId = filters.organizationId;
+    }
+
+    // v2.0: Visibility-based access control
+    // If userId is provided, apply visibility rules
+    if (filters.userId) {
+      const visibilityConditions: Prisma.TaskWhereInput[] = [
+        // PRIVATE: Only creator can see
+        { visibility: 'PRIVATE', creatorId: filters.userId },
+        // ORGANIZATION: All org members can see (filtered by orgId above)
+        { visibility: 'ORGANIZATION' },
+      ];
+
+      // TEAM: User must be in the team
+      if (filters.teamIds && filters.teamIds.length > 0) {
+        visibilityConditions.push({
+          visibility: 'TEAM',
+          teamId: { in: filters.teamIds },
+        });
+      }
+
+      // Also include tasks assigned to the user (regardless of visibility)
+      visibilityConditions.push({ assignedToId: filters.userId });
+
+      where.OR = visibilityConditions;
     }
 
     // Build orderBy clause

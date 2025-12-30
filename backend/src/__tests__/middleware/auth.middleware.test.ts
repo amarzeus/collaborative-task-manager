@@ -4,8 +4,8 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { Response, NextFunction } from 'express';
-import { authenticate, AuthenticatedRequest } from '../../middleware/auth.middleware';
+import { Request, Response, NextFunction } from 'express';
+import { authenticate } from '../../middleware/auth.middleware';
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../lib/errors';
 
@@ -19,7 +19,7 @@ jest.mock('../../lib/prisma', () => ({
 }));
 
 describe('authMiddleware.verifyJWT', () => {
-  let mockReq: Partial<AuthenticatedRequest>;
+  let mockReq: Partial<Request> & { user?: any };
   let mockRes: Partial<Response>;
   let mockNext: NextFunction;
 
@@ -48,7 +48,7 @@ describe('authMiddleware.verifyJWT', () => {
       mockReq.cookies = { token };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
       expect(mockReq.user).toEqual(mockUser);
@@ -59,14 +59,14 @@ describe('authMiddleware.verifyJWT', () => {
       mockReq.headers = { authorization: `Bearer ${token}` };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
       expect(mockReq.user).toEqual(mockUser);
     });
 
     it('should reject request with no token', async () => {
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
       const error = (mockNext as jest.Mock).mock.calls[0][0];
@@ -79,7 +79,7 @@ describe('authMiddleware.verifyJWT', () => {
       const token = jwt.sign({ userId: mockUser.id, email: mockUser.email }, 'wrong-secret');
       mockReq.cookies = { token };
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
       const error = (mockNext as jest.Mock).mock.calls[0][0];
@@ -91,7 +91,7 @@ describe('authMiddleware.verifyJWT', () => {
       mockReq.cookies = { token };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
     });
@@ -106,7 +106,7 @@ describe('authMiddleware.verifyJWT', () => {
       );
       mockReq.cookies = { token };
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
       const error = (mockNext as jest.Mock).mock.calls[0][0];
@@ -122,7 +122,7 @@ describe('authMiddleware.verifyJWT', () => {
       mockReq.cookies = { token };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
     });
@@ -134,7 +134,7 @@ describe('authMiddleware.verifyJWT', () => {
       mockReq.cookies = { token };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
       const error = (mockNext as jest.Mock).mock.calls[0][0];
@@ -146,7 +146,7 @@ describe('authMiddleware.verifyJWT', () => {
       mockReq.cookies = { token };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue({ ...mockUser, isActive: false });
 
-      await authenticate(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
+      await authenticate(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
       const error = (mockNext as jest.Mock).mock.calls[0][0];
