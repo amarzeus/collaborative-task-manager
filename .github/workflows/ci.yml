@@ -7,7 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  backend-ci:
+  # ------------------------------------------------------------------
+  # QUALITY CHECKS (Parallel)
+  # ------------------------------------------------------------------
+  quality-backend:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -42,27 +45,18 @@ jobs:
       working-directory: ./backend
       run: npm run lint
 
-    - name: Database Setup
-      working-directory: ./backend
-      env:
-        DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
-      run: |
-        npx prisma generate
-        npm run test:db:setup
-
-    - name: Run Tests
+    - name: Database Setup & Tests
       working-directory: ./backend
       env:
         DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
         JWT_SECRET: test_secret
         PORT: 3001
-      run: npm run test
+      run: |
+        npx prisma generate
+        npm run test:db:setup
+        npm run test
 
-    - name: Build Verification
-      working-directory: ./backend
-      run: npm run build
-
-  frontend-ci:
+  quality-frontend:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -82,33 +76,22 @@ jobs:
       working-directory: ./frontend
       run: npm run lint
 
-    - name: Run Tests
+    - name: Unit Tests
       working-directory: ./frontend
       run: npm run test:run
 
-    - name: Build Verification
+    - name: Build Check
       working-directory: ./frontend
-      env:
-        VITE_API_URL: http://localhost:3001/api/v1
       run: npm run build
 
+  # ------------------------------------------------------------------
+  # END-TO-END VERIFICATION (Production-like)
+  # ------------------------------------------------------------------
   e2e-tests:
+    needs: [quality-backend, quality-frontend]
     runs-on: ubuntu-latest
-    needs: [backend-ci, frontend-ci]
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    env:
+      CI_DOCKER: true # Signal to Playwright config
 
     steps:
     - uses: actions/checkout@v4
@@ -120,59 +103,27 @@ jobs:
         cache: 'npm'
         cache-dependency-path: package-lock.json
 
-    - name: Install Root Dependencies
-      run: npm ci
-
-    - name: Install Backend Dependencies
-      working-directory: ./backend
-      run: npm ci
-
-    - name: Setup Backend Database
-      working-directory: ./backend
-      env:
-        DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
-      run: |
-        npx prisma generate
-        npm run test:db:setup
-
-    - name: Install Frontend Dependencies
-      working-directory: ./frontend
+    - name: Install Root Dependencies (Playwright)
       run: npm ci
 
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps chromium
 
+    - name: Start Production Environment (Docker)
+      run: docker compose -f docker-compose.ci.yml up -d --build
+
+    - name: Wait for Services
+      run: |
+        echo "Waiting for services to be healthy..."
+        timeout 60s bash -c 'until docker compose -f docker-compose.ci.yml ps | grep "healthy"; do sleep 2; done'
+        echo "Services are up!"
+        # Double check accessibility
+        timeout 30s bash -c 'until curl -s http://localhost:8080 > /dev/null; do sleep 1; done'
+
     - name: Run E2E Tests
       env:
-        DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
-        JWT_SECRET: test_secret
-        PORT: 3001
-        VITE_API_URL: http://localhost:3001/api/v1
-        PLAYWRIGHT_BASE_URL: http://localhost:5173
-      run: |
-        # Start Backend
-        echo "Starting Backend..."
-        cd backend && npm run dev &
-        BACKEND_PID=$!
-        
-        # Wait for Backend Health Check
-        echo "Waiting for Backend Health Check..."
-        timeout 120 bash -c 'until curl -s http://localhost:3001/api/health; do sleep 1; done' || (echo "Backend failed to start" && exit 1)
-        echo "Backend is ready!"
-
-        # Start Frontend
-        echo "Starting Frontend..."
-        cd ../frontend && npm run dev &
-        FRONTEND_PID=$!
-
-        # Wait for Frontend
-        echo "Waiting for Frontend..."
-        timeout 120 bash -c 'until curl -s http://localhost:5173; do sleep 1; done' || (echo "Frontend failed to start" && exit 1)
-        echo "Frontend is ready!"
-
-        # Run Tests
-        cd ..
-        npx playwright test
+        PLAYWRIGHT_BASE_URL: http://localhost:8080
+      run: npx playwright test
 
     - name: Upload Playwright Report
       uses: actions/upload-artifact@v4
@@ -182,8 +133,19 @@ jobs:
         path: playwright-report/
         retention-days: 30
 
+    - name: Dump Docker Logs (if failed)
+      if: failure()
+      run: docker compose -f docker-compose.ci.yml logs
+
+    - name: Teardown
+      if: always()
+      run: docker compose -f docker-compose.ci.yml down
+
+  # ------------------------------------------------------------------
+  # DEPLOYMENT
+  # ------------------------------------------------------------------
   backend-deploy:
-    needs: [backend-ci, e2e-tests]
+    needs: [e2e-tests]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -191,7 +153,7 @@ jobs:
         run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
   frontend-deploy:
-    needs: [frontend-ci, e2e-tests]
+    needs: [e2e-tests]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:

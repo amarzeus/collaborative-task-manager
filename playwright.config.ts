@@ -9,7 +9,7 @@ export default defineConfig({
     reporter: 'html',
 
     use: {
-        baseURL: 'http://localhost:5173',
+        baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
     },
@@ -21,8 +21,8 @@ export default defineConfig({
         },
     ],
 
-    /* Start dev server before tests */
-    webServer: {
+    /* Start dev server before tests - disable if running against Docker in CI */
+    webServer: process.env.CI_DOCKER ? undefined : {
         command: 'npm run dev',
         url: 'http://localhost:3001/api/health',
         reuseExistingServer: true,

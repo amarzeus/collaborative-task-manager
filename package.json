@@ -11,10 +11,12 @@
     "test:frontend": "cd frontend && npm run test:run",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
-    "test:e2e:headed": "npx playwright test --headed"
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:ci": "docker compose -f docker-compose.ci.yml up -d --build && echo 'Waiting for services...' && sleep 10 && npx playwright test; docker compose -f docker-compose.ci.yml down"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.3",
     "concurrently": "^8.2.0"
   }
 }

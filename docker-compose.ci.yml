@@ -1,0 +1,56 @@
+services:
+  # PostgreSQL Database (Test Instance)
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U test_user -d test_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ci-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgres://test_user:test_password@db:5432/test_db
+      JWT_SECRET: test_secret_key_123
+      JWT_EXPIRES_IN: 1d
+      FRONTEND_URL: http://localhost:8080
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ci-network
+
+  # Frontend (Nginx serving production build)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3001/api/v1
+        VITE_SOCKET_URL: http://localhost:3001
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - ci-network
+
+networks:
+  ci-network:
+    driver: bridge
