@@ -6,7 +6,7 @@
  *   description: Task CRUD operations
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { taskController } from '../controllers/task.controller.js';
 import { commentController } from '../controllers/comment.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
@@ -132,4 +132,3 @@ taskRouter.delete('/:id', taskController.deleteTask as any);
  *       200: { description: List of comments }
  */
 taskRouter.get('/:taskId/comments', commentController.getTaskComments as any);
-

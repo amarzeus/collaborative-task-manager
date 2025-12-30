@@ -7,7 +7,6 @@ import { Request, Response, NextFunction } from 'express';
 import { Server } from 'socket.io';
 import { commentService } from '../services/comment.service.js';
 
-
 export const commentController = {
   /**
    * GET /api/v1/tasks/:taskId/comments
@@ -31,7 +30,10 @@ export const commentController = {
    */
   async createComment(req: Request, res: Response, next: NextFunction) {
     try {
-      const { comment, notifyUserId } = await commentService.createComment(req.body, (req as any).user!.id);
+      const { comment, notifyUserId } = await commentService.createComment(
+        req.body,
+        (req as any).user!.id
+      );
 
       // Emit real-time update
       const io: Server = req.app.get('io');
@@ -62,7 +64,11 @@ export const commentController = {
    */
   async updateComment(req: Request, res: Response, next: NextFunction) {
     try {
-      const comment = await commentService.updateComment(req.params.id, req.body, (req as any).user!.id);
+      const comment = await commentService.updateComment(
+        req.params.id,
+        req.body,
+        (req as any).user!.id
+      );
 
       // Emit real-time update
       const io: Server = req.app.get('io');

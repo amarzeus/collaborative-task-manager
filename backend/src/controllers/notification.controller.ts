@@ -6,7 +6,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { notificationService } from '../services/notification.service.js';
 
-
 export const notificationController = {
   /**
    * GET /api/v1/notifications

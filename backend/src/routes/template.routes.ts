@@ -3,7 +3,7 @@
  * API endpoints for task templates
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { templateController } from '../controllers/template.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 

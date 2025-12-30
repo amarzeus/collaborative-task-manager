@@ -116,7 +116,8 @@ export const planTypeEnum = z.enum(['FREE', 'TEAM', 'BUSINESS', 'ENTERPRISE']);
 
 export const createOrganizationSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-  slug: z.string()
+  slug: z
+    .string()
     .min(3, 'Slug must be at least 3 characters')
     .max(50, 'Slug too long')
     .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
@@ -124,7 +125,8 @@ export const createOrganizationSchema = z.object({
 
 export const updateOrganizationSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  slug: z.string()
+  slug: z
+    .string()
     .min(3)
     .max(50)
     .regex(/^[a-z0-9-]+$/)

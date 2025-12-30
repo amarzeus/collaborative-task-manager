@@ -145,11 +145,7 @@ export const adminController = {
    * POST /api/v1/admin/tasks/bulk
    * Bulk operations on tasks
    */
-  async bulkTaskOperation(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async bulkTaskOperation(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const input = req.body as BulkTaskInput;
       const result = await bulkService.bulkTaskOperation(input, {
@@ -166,11 +162,7 @@ export const adminController = {
    * POST /api/v1/admin/tasks/bulk/preview
    * Preview bulk operation before executing
    */
-  async bulkTaskPreview(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async bulkTaskPreview(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskIds } = req.body as { taskIds: string[] };
       const preview = await bulkService.getBulkTaskPreview(taskIds);
@@ -211,11 +203,7 @@ export const adminController = {
    * GET /api/v1/admin/audit-logs/:entityType/:entityId
    * Get audit history for a specific entity
    */
-  async getEntityAuditHistory(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async getEntityAuditHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { entityType, entityId } = req.params;
       const logs = await auditService.getEntityHistory(entityType, entityId);

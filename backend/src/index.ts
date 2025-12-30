@@ -60,9 +60,11 @@ app.use(
     credentials: true,
   })
 );
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin for uploads
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin for uploads
+  })
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
@@ -76,10 +78,14 @@ app.use('/api', apiLimiter); // Apply rate limiting to all API routes
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API Documentation (Swagger UI)
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'TaskFlow API Docs',
-}));
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'TaskFlow API Docs',
+  })
+);
 
 // API Routes with rate limiting
 app.use('/api/v1/auth', authLimiter, authRouter); // Stricter limit for auth

@@ -29,7 +29,6 @@ describe('TaskCard Component', () => {
     const mockOnEdit = vi.fn();
     const mockOnDelete = vi.fn();
     const mockOnStatusChange = vi.fn();
-    const mockOnClick = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();

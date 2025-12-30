@@ -9,7 +9,11 @@ export const analyticsController = {
    */
   getScope(req: Request): AnalyticsScope {
     const scope = (req.query.scope as AnalyticsScope) || 'personal';
-    if (scope === 'global' && (req as any).user?.role !== 'ADMIN' && (req as any).user?.role !== 'SUPER_ADMIN') {
+    if (
+      scope === 'global' &&
+      (req as any).user?.role !== 'ADMIN' &&
+      (req as any).user?.role !== 'SUPER_ADMIN'
+    ) {
       throw AppError.forbidden('Only admins can access global analytics');
     }
     return scope;
@@ -36,7 +40,10 @@ export const analyticsController = {
   async getPriorities(req: Request, res: Response, next: NextFunction) {
     try {
       const scope = analyticsController.getScope(req);
-      const distribution = await analyticsService.getPriorityDistribution((req as any).user!.id, scope);
+      const distribution = await analyticsService.getPriorityDistribution(
+        (req as any).user!.id,
+        scope
+      );
       res.json({ success: true, data: distribution });
     } catch (error) {
       next(error);
@@ -50,7 +57,11 @@ export const analyticsController = {
     try {
       const scope = analyticsController.getScope(req);
       const days = parseInt(req.query.days as string) || 7;
-      const metrics = await analyticsService.getProductivityMetrics((req as any).user!.id, scope, days);
+      const metrics = await analyticsService.getProductivityMetrics(
+        (req as any).user!.id,
+        scope,
+        days
+      );
       res.json({ success: true, data: metrics });
     } catch (error) {
       next(error);

@@ -5,7 +5,6 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { Role } from '@prisma/client';
 import { AppError } from '../lib/errors.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -13,7 +12,6 @@ export interface JwtPayload {
   userId: string;
   email: string;
 }
-
 
 /**
  * Extracts token from cookies or Authorization header

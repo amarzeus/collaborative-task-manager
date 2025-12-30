@@ -7,7 +7,6 @@ import { Request, Response, NextFunction } from 'express';
 import { Role } from '@prisma/client';
 import { AppError } from '../lib/errors.js';
 
-
 /**
  * Middleware factory to restrict access to specific roles
  * @param allowedRoles - Array of roles that can access the route

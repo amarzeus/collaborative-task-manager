@@ -87,7 +87,11 @@ export const taskService = {
    * Create a new task
    * @returns Task and notification target (if assigned)
    */
-  async createTask(data: CreateTaskDto, creatorId: string, organizationId?: string | null): Promise<TaskServiceResponse> {
+  async createTask(
+    data: CreateTaskDto,
+    creatorId: string,
+    organizationId?: string | null
+  ): Promise<TaskServiceResponse> {
     // Validate assignee exists if provided
     if (data.assignedToId) {
       const assignee = await userRepository.findById(data.assignedToId);

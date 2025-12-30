@@ -3,7 +3,7 @@
  * Requires Manager or higher org role
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { managerDashboardController } from '../controllers/manager-dashboard.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { tenantMiddleware, requireOrganization } from '../middleware/tenant.middleware.js';

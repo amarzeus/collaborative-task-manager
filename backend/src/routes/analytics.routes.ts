@@ -6,7 +6,7 @@
  *   description: Analytics and insights endpoints
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { analyticsController } from '../controllers/analytics.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 
@@ -100,4 +100,3 @@ router.get('/insights', analyticsController.getInsights as any);
 router.get('/dashboard', analyticsController.getDashboardData as any);
 
 export default router;
-

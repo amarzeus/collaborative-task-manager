@@ -7,7 +7,6 @@ import { Request, Response, NextFunction } from 'express';
 import { Server } from 'socket.io';
 import { taskService } from '../services/task.service.js';
 
-
 export const taskController = {
   /**
    * GET /api/v1/tasks

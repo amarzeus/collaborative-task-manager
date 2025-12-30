@@ -3,7 +3,7 @@
  * Chat and conversation management endpoints
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { aiController } from '../controllers/ai.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { tenantMiddleware } from '../middleware/tenant.middleware.js';

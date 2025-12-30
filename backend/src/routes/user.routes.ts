@@ -2,7 +2,7 @@
  * User Routes
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { userController } from '../controllers/user.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 

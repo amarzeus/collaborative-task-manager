@@ -6,7 +6,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { userRepository } from '../repositories/user.repository.js';
 
-
 export const userController = {
   /**
    * GET /api/v1/users
