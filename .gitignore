@@ -13,7 +13,7 @@ dist/
 build/
 backend/dist/
 frontend/dist/
-test-results/
+*test-results/
 playwright-report/
 
 # Environment files
