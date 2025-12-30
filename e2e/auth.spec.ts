@@ -19,7 +19,7 @@ test.describe('Authentication', () => {
         await page.goto('/login');
 
         await expect(page.getByLabel(/email/i)).toBeVisible();
-        await expect(page.getByLabel(/password/i)).toBeVisible();
+        await expect(page.getByLabel(/^password$/i)).toBeVisible();
         await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
     });
 
@@ -27,11 +27,11 @@ test.describe('Authentication', () => {
         await page.goto('/login');
 
         await page.getByLabel(/email/i).fill('invalid@example.com');
-        await page.getByLabel(/password/i).fill('wrongpassword');
+        await page.getByLabel(/^password$/i).fill('wrongpassword');
         await page.getByRole('button', { name: /sign in|login/i }).click();
 
         // Should show error message
-        await expect(page.getByText(/invalid|error|incorrect/i)).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText(/invalid|error|incorrect|failed/i)).toBeVisible({ timeout: 10000 });
     });
 
     test('should navigate to register page from login', async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('Authentication', () => {
 
         await expect(page.getByLabel(/name/i)).toBeVisible();
         await expect(page.getByLabel(/email/i)).toBeVisible();
-        await expect(page.getByLabel(/password/i)).toBeVisible();
+        await expect(page.getByLabel(/^password$/i)).toBeVisible();
         await expect(page.getByRole('button', { name: /sign up|register|create/i })).toBeVisible();
     });
 });

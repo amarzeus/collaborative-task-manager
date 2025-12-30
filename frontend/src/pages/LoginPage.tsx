@@ -85,6 +85,7 @@ export function LoginPage() {
                                     className="pl-11"
                                     {...register('email')}
                                     error={errors.email?.message}
+                                    aria-label="Email address"
                                 />
                             </div>
 
@@ -96,6 +97,7 @@ export function LoginPage() {
                                     className="pl-11 pr-11"
                                     {...register('password')}
                                     error={errors.password?.message}
+                                    aria-label="Password"
                                 />
                                 <button
                                     type="button"

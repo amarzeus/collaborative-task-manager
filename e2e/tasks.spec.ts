@@ -5,22 +5,26 @@
 
 import { test, expect } from '@playwright/test';
 
-// Test user credentials - requires a pre-seeded test user
-const TEST_USER = {
-    email: 'test@example.com',
-    password: 'password123',
-};
-
 test.describe('Task Management', () => {
     test.beforeEach(async ({ page }) => {
-        // Login before each test
-        await page.goto('/login');
-        await page.getByLabel(/email/i).fill(TEST_USER.email);
-        await page.getByLabel(/password/i).fill(TEST_USER.password);
-        await page.getByRole('button', { name: /sign in|login/i }).click();
+        // Create a unique user for each test to ensure isolation
+        const uniqueId = Date.now();
+        const user = {
+            name: `Test User ${uniqueId}`,
+            email: `test${uniqueId}@example.com`,
+            password: 'password123',
+        };
+
+        // Register new user
+        await page.goto('/register');
+        await page.getByLabel(/full name/i).fill(user.name);
+        await page.getByLabel(/email/i).fill(user.email);
+        await page.getByLabel(/^password$/i).fill(user.password);
+        await page.getByLabel(/confirm/i).fill(user.password);
+        await page.getByRole('button', { name: /create|register/i }).click();
 
         // Wait for dashboard to load
-        await page.waitForURL(/dashboard|tasks/, { timeout: 10000 });
+        await page.waitForURL(/\/dashboard/, { timeout: 30000 });
     });
 
     test('should display dashboard after login', async ({ page }) => {

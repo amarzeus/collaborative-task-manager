@@ -96,6 +96,7 @@ export function RegisterPage() {
                                     className="pl-11"
                                     {...register('name')}
                                     error={errors.name?.message}
+                                    aria-label="Full name"
                                 />
                             </div>
 
@@ -107,6 +108,7 @@ export function RegisterPage() {
                                     className="pl-11"
                                     {...register('email')}
                                     error={errors.email?.message}
+                                    aria-label="Email address"
                                 />
                             </div>
 
@@ -118,6 +120,7 @@ export function RegisterPage() {
                                     className="pl-11 pr-11"
                                     {...register('password')}
                                     error={errors.password?.message}
+                                    aria-label="Password"
                                 />
                                 <button
                                     type="button"
@@ -140,6 +143,7 @@ export function RegisterPage() {
                                     className="pl-11 pr-11"
                                     {...register('confirmPassword')}
                                     error={errors.confirmPassword?.message}
+                                    aria-label="Confirm password"
                                 />
                                 <button
                                     type="button"
