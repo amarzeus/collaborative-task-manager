@@ -25,7 +25,7 @@ export default defineConfig({
     webServer: {
         command: 'npm run dev',
         url: 'http://localhost:3001/api/health',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true,
         timeout: 120000,
     },
 });

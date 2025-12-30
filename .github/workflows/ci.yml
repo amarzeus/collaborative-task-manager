@@ -149,7 +149,30 @@ jobs:
         PORT: 3001
         VITE_API_URL: http://localhost:3001/api/v1
         PLAYWRIGHT_BASE_URL: http://localhost:5173
-      run: npm run test:e2e
+      run: |
+        # Start Backend
+        echo "Starting Backend..."
+        cd backend && npm run dev &
+        BACKEND_PID=$!
+        
+        # Wait for Backend Health Check
+        echo "Waiting for Backend Health Check..."
+        timeout 120 bash -c 'until curl -s http://localhost:3001/api/health; do sleep 1; done' || (echo "Backend failed to start" && exit 1)
+        echo "Backend is ready!"
+
+        # Start Frontend
+        echo "Starting Frontend..."
+        cd ../frontend && npm run dev &
+        FRONTEND_PID=$!
+
+        # Wait for Frontend
+        echo "Waiting for Frontend..."
+        timeout 120 bash -c 'until curl -s http://localhost:5173; do sleep 1; done' || (echo "Frontend failed to start" && exit 1)
+        echo "Frontend is ready!"
+
+        # Run Tests
+        cd ..
+        npx playwright test
 
     - name: Upload Playwright Report
       uses: actions/upload-artifact@v4

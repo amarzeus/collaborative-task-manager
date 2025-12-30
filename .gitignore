@@ -13,6 +13,8 @@ dist/
 build/
 backend/dist/
 frontend/dist/
+test-results/
+playwright-report/
 
 # Environment files
 .env
