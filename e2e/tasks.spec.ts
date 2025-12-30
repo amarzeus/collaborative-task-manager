@@ -12,7 +12,7 @@ test.describe('Task Management', () => {
         const user = {
             name: `Test User ${uniqueId}`,
             email: `test${uniqueId}@example.com`,
-            password: 'password123',
+            password: 'Password123',
         };
 
         // Register new user
@@ -28,24 +28,23 @@ test.describe('Task Management', () => {
     });
 
     test('should display dashboard after login', async ({ page }) => {
-        await expect(page.getByText(/dashboard|tasks|welcome/i)).toBeVisible();
+        // Wait for any of the dashboard elements
+        await expect(page.getByRole('heading', { name: /welcome|good/i })).toBeVisible();
     });
 
     test('should navigate to tasks page', async ({ page }) => {
-        // Click on tasks link if on dashboard
-        const tasksLink = page.getByRole('link', { name: /tasks/i });
-        if (await tasksLink.isVisible()) {
-            await tasksLink.click();
-        }
+        // Click on tasks link in sidebar specifically
+        const tasksLink = page.locator('nav').getByRole('link', { name: 'Tasks' });
+        await tasksLink.click();
 
-        await expect(page).toHaveURL(/tasks/);
+        await expect(page).toHaveURL(/\/tasks/);
     });
 
     test('should open create task modal', async ({ page }) => {
         await page.goto('/tasks');
 
         // Click create/add task button
-        await page.getByRole('button', { name: /create|add|new/i }).click();
+        await page.getByRole('button', { name: 'New Task' }).click();
 
         // Modal should appear with form
         await expect(page.getByLabel(/title/i)).toBeVisible();
